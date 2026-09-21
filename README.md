@@ -57,7 +57,6 @@
 ```
 index.html   入口
 kiji.html    記事（図・画面つき）
-kiji.md      記事のMarkdown版
 lp.html      仕組みの説明
 mock.html    動く試作（単一ファイル）
 zu/          図と画面のスクリーンショット
