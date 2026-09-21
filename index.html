@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>避難所の受付から、医師につなぐまで ｜ 災害時支援受付システム（試作）</title>
+<meta name="description" content="避難所の受付を入口にして、薬が切れた方や持病の相談を、被災していない地域の医師につなぐ仕組みの試作です。">
+<style>
+:root{
+  --ink:#16283C; --ink2:#4A5B6E; --ink3:#7C8A99;
+  --paper:#E7EAE4; --card:#FFFFFF; --line:#C9D0C7; --line2:#E2E6DF;
+  --med:#00713C; --med-soft:#E4F0E8;
+  --adm:#1B5FA8; --adm-soft:#E3ECF6;
+  --urgent:#C41230; --urgent-soft:#FBE8EB;
+  --warn:#B87400; --warn-soft:#FBF1DC;
+  --sans:"Hiragino Kaku Gothic ProN","Yu Gothic Medium","Noto Sans JP","Meiryo",system-ui,sans-serif;
+  --mincho:"Hiragino Mincho ProN","Yu Mincho","Noto Serif JP",serif;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);
+  font-size:16px;line-height:1.9;font-feature-settings:"palt"}
+.wrap{max-width:760px;margin:0 auto;padding:0 22px}
+header{padding:64px 0 34px}
+.kicker{font-size:12.5px;color:var(--ink3);letter-spacing:.08em;margin-bottom:16px}
+h1{font-family:var(--mincho);font-weight:600;font-size:clamp(23px,4.4vw,32px);
+  line-height:1.5;margin:0 0 22px;letter-spacing:.01em}
+.sub{font-size:15px;color:var(--ink2);margin:0}
+.sub strong{color:var(--ink)}
+
+main{padding:0 0 70px}
+.cards{display:grid;gap:14px;margin:34px 0 0}
+a.card{display:block;background:var(--card);border:1px solid var(--line);border-radius:12px;
+  padding:22px 24px;text-decoration:none;color:inherit;transition:border-color .15s, transform .15s}
+a.card:hover{border-color:var(--med);transform:translateY(-1px)}
+.ct{font-size:18px;font-weight:700;margin:0 0 6px;display:flex;align-items:center;gap:10px}
+.ct .ico{font-size:20px;line-height:1}
+.cd{font-size:14px;color:var(--ink2);margin:0}
+.cwho{display:inline-block;font-size:11.5px;color:var(--med);background:var(--med-soft);
+  border-radius:4px;padding:2px 8px;margin-top:10px;font-weight:700}
+
+section.note{margin:46px 0 0;padding:24px 26px;background:var(--card);
+  border:1px solid var(--line);border-radius:12px}
+section.note h2{font-family:var(--sans);font-size:13px;font-weight:700;color:var(--ink2);
+  letter-spacing:.08em;margin:0 0 14px}
+section.note p{margin:0 0 14px;font-size:14.5px}
+section.note p:last-child{margin-bottom:0}
+section.note strong{font-weight:700}
+
+.todo{margin:26px 0 0;padding:22px 26px;border:1px solid var(--line);border-radius:12px}
+.todo h2{font-family:var(--sans);font-size:13px;font-weight:700;color:var(--ink2);
+  letter-spacing:.08em;margin:0 0 12px}
+.todo ul{margin:0;padding-left:1.3em;font-size:14px;color:var(--ink2)}
+.todo li{margin-bottom:5px}
+
+footer{border-top:1px solid var(--line);padding:26px 0 60px;font-size:13px;color:var(--ink3)}
+footer a{color:var(--adm)}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <div class="kicker">災害時支援受付システム（試作）</div>
+    <h1>避難所の受付から、医師につなぐまで</h1>
+    <p class="sub">避難所の受付は、名前と住所を聞きます。でも、その人が薬を切らしていることは聞きません。<br>
+    受付を入口にして、<strong>被災していない地域の医師</strong>につなぐ仕組みを考え、動く試作を作りました。</p>
+  </div>
+</header>
+
+<main>
+  <div class="wrap">
+
+    <div class="cards">
+      <a class="card" href="kiji.html">
+        <p class="ct"><span class="ico">📄</span>なぜ作ったのか（記事）</p>
+        <p class="cd">調べて分かったこと、設計で迷ったこと、まだできていないこと。図と実際の画面つきで説明しています。はじめての方はここから。</p>
+        <span class="cwho">まず読むならここ</span>
+      </a>
+
+      <a class="card" href="lp.html">
+        <p class="ct"><span class="ico">🏛</span>仕組みの説明</p>
+        <p class="cd">いまある仕組みとの関係、災害時の特例、端末の役割、導入のはじめ方。自治体・医師会の方向けにまとめています。</p>
+        <span class="cwho">自治体・医師会の方へ</span>
+      </a>
+
+      <a class="card" href="mock.html">
+        <p class="ct"><span class="ico">📱</span>試作を触ってみる</p>
+        <p class="cd">ブラウザで動きます。登録も通信も不要です。受付・掲示・呼び出し・巡回・お薬のリクエストを、実際の操作で確認できます。</p>
+        <span class="cwho">デモのデータが入っています</span>
+      </a>
+    </div>
+
+    <section class="note">
+      <h2>この試作について</h2>
+      <p>私は医師でも、自治体の職員でも、防災の専門家でもありません。札幌でソフトウェアを書いている一般人です。</p>
+      <p>この仕組みは、私一人では動きません。避難所に置くのも、医師を集めるのも、自分ではできません。<strong>この構想を引き取ってくださる方をさがしています。</strong></p>
+      <p>改変していただいてかまいません。名前が残らなくてもかまいません。「そこは違う」というご指摘だけでもありがたいです。</p>
+    </section>
+
+    <div class="todo">
+      <h2>まだできていないこと</h2>
+      <ul>
+        <li>全避難所の待ち行列をサーバーで集約し、空いた医師に自動で割り当てる（<strong>中心の機能</strong>）</li>
+        <li>医師の待機登録と、ワンタップでの離脱</li>
+        <li>同じ避難所の端末どうしの同期</li>
+        <li>実際の映像通話の組み込み（いまは見た目だけ）</li>
+        <li>自治体システムとの連携、端末登録型の認証</li>
+      </ul>
+    </div>
+
+  </div>
+</main>
+
+<footer>
+  <div class="wrap">
+    本文中の数値や制度の記述は公表資料をもとにしていますが、引用の正確さについては原典をご確認ください。<br>
+    誤りやご指摘は、リポジトリの Issue か、記事の末尾に記載の連絡先までお願いします。
+  </div>
+</footer>
+
+</body>
+</html>

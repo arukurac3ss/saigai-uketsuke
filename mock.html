@@ -1,0 +1,3553 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#16283C">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>避難所 受付票 ｜ オンライン診療・生活相談</title>
+<link rel="manifest" href='data:application/manifest+json,{"name":"避難所受付票","short_name":"受付票","start_url":".","display":"standalone","background_color":"%23E7EAE4","theme_color":"%2316283C"}'>
+<style>
+:root{
+  --ink:#16283C; --ink2:#4A5B6E; --ink3:#7C8A99;
+  --paper:#E7EAE4; --card:#FFFFFF; --line:#C9D0C7; --line2:#E2E6DF;
+  --med:#00713C; --med-soft:#E4F0E8;
+  --adm:#1B5FA8; --adm-soft:#E3ECF6;
+  --urgent:#C41230; --urgent-soft:#FBE8EB;
+  --warn:#B87400; --warn-soft:#FBF1DC;
+  --r:10px;
+  --sans:"Hiragino Kaku Gothic ProN","Yu Gothic Medium","Noto Sans JP","Meiryo",system-ui,sans-serif;
+  --serif:"Hiragino Mincho ProN","Yu Mincho","Noto Serif JP",serif;
+  --mono:ui-monospace,"SFMono-Regular","Menlo",monospace;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{
+  background:var(--paper); color:var(--ink); font-family:var(--sans);
+  font-size:17px; line-height:1.6; -webkit-text-size-adjust:100%;
+}
+button{font-family:inherit;font-size:inherit;color:inherit}
+input,select,textarea{font-family:inherit;font-size:17px;color:inherit}
+
+/* ---------- shell ---------- */
+#topStack{position:sticky;top:0;z-index:30}
+.topbar{
+  background:var(--ink); color:#fff;
+  padding:10px 16px calc(10px + env(safe-area-inset-bottom,0px)*0);
+  display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+}
+.topbar .brand{font-family:var(--serif); font-size:18px; letter-spacing:.14em}
+.topbar .term{font-size:12px;font-family:var(--mono);background:#2A4257;color:#fff;border-radius:999px;padding:4px 11px;letter-spacing:.04em}
+.topbar .term[hidden]{display:none}
+.topbar .site{
+  font-size:13px; color:#B9C6D4; font-family:var(--mono);
+  border-left:1px solid #3C4E62; padding-left:12px;
+}
+.topbar .spacer{flex:1}
+.reset{
+  background:transparent;border:1px solid #47596D;color:#C4D0DC;
+  border-radius:999px;padding:5px 14px;font-size:13px;cursor:pointer
+}
+.reset:hover{background:#22374E}
+.prog{height:3px;background:#2C3E52}
+.prog i{display:block;height:100%;background:var(--med);transition:width .3s ease}
+body[data-route="admin"] .prog i{background:var(--adm)}
+
+.wrap{max-width:1120px;margin:0 auto;padding:22px 16px 90px;display:grid;grid-template-columns:1fr 340px;gap:26px;align-items:start}
+@media(max-width:900px){.wrap{grid-template-columns:1fr;padding-bottom:120px}}
+
+/* ---------- form column ---------- */
+.stepno{font-family:var(--mono);font-size:12px;letter-spacing:.18em;color:var(--ink3);text-transform:uppercase}
+h1.q{font-size:27px;line-height:1.4;margin:6px 0 4px;font-weight:700;letter-spacing:.01em}
+.hint{color:var(--ink2);font-size:15px;margin:0 0 20px}
+.hint.warn{background:var(--warn-soft);border-left:3px solid var(--warn);padding:10px 14px;border-radius:0 6px 6px 0;color:#6B4700}
+.hint.info{background:#F2F4EF;border-left:3px solid var(--line);padding:10px 14px;border-radius:0 6px 6px 0;color:var(--ink2)}
+
+.opts{display:flex;flex-direction:column;gap:10px;margin:0 0 8px}
+.opt{
+  display:flex;align-items:center;gap:14px;width:100%;text-align:left;
+  background:var(--card);border:1.5px solid var(--line);border-radius:var(--r);
+  padding:17px 18px;min-height:64px;cursor:pointer;transition:border-color .15s,background .15s;
+}
+.opt:hover{border-color:var(--ink3)}
+.opt:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+.opt .mark{
+  flex:none;width:26px;height:26px;border:2px solid var(--ink3);background:#fff;
+  display:grid;place-items:center;font-size:15px;color:#fff;line-height:1
+}
+.opt[data-multi="1"] .mark{border-radius:5px}
+.opt[data-multi="0"] .mark{border-radius:50%}
+.opt .lbl{font-size:19px;font-weight:600}
+.opt .sub{display:block;font-size:14px;font-weight:400;color:var(--ink2);margin-top:2px}
+.opt[aria-pressed="true"]{border-color:var(--med);background:var(--med-soft)}
+.opt[aria-pressed="true"] .mark{background:var(--med);border-color:var(--med)}
+body[data-route="admin"] .opt[aria-pressed="true"]{border-color:var(--adm);background:var(--adm-soft)}
+body[data-route="admin"] .opt[aria-pressed="true"] .mark{background:var(--adm);border-color:var(--adm)}
+.opt.route-med[aria-pressed="true"]{border-color:var(--med);background:var(--med-soft)}
+.opt.route-adm[aria-pressed="true"]{border-color:var(--adm);background:var(--adm-soft)}
+.opt.route-adm[aria-pressed="true"] .mark{background:var(--adm);border-color:var(--adm)}
+.opt .tag{margin-left:auto;font-size:12px;font-family:var(--mono);color:var(--ink3);flex:none}
+
+.fields{display:flex;flex-direction:column;gap:16px}
+.f{display:flex;flex-direction:column;gap:6px}
+.f>label{font-size:14px;font-weight:700;color:var(--ink2);letter-spacing:.04em}
+.req,.any{display:inline-block;font-family:var(--mono);font-size:10px;padding:2px 6px;border-radius:3px;margin-left:7px;letter-spacing:.08em;vertical-align:2px;font-weight:700}
+.req{background:var(--urgent-soft);color:var(--urgent)}
+.any{background:#EDF0EA;color:var(--ink3)}
+h1.q .req{font-size:12px;vertical-align:6px;padding:3px 9px}
+.sec>h2 .req,.sec>h2 .any{vertical-align:1px}
+.f .note{font-size:13px;color:var(--ink3)}
+.f input[type=text],.f input[type=tel],.f input[type=date],.f input[type=number],.f select,.f textarea{
+  background:var(--card);border:1.5px solid var(--line);border-radius:8px;padding:13px 14px;width:100%
+}
+.f input:focus,.f select:focus,.f textarea:focus{outline:none;border-color:var(--ink)}
+.row{display:flex;gap:12px;flex-wrap:wrap}
+.row>*{flex:1;min-width:130px}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{
+  background:var(--card);border:1.5px solid var(--line);border-radius:999px;
+  padding:11px 18px;cursor:pointer;font-size:16px;font-weight:600
+}
+.chip[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:#fff}
+
+.sec{border-top:1px solid var(--line);margin-top:22px;padding-top:18px}
+.sec>h2{font-size:16px;margin:0 0 12px;letter-spacing:.04em}
+
+/* search */
+.searchbox{position:relative}
+.results{list-style:none;margin:8px 0 0;padding:0;border:1.5px solid var(--line);border-radius:8px;overflow:hidden;background:var(--card)}
+.results li+li{border-top:1px solid var(--line2)}
+.results button{
+  display:block;width:100%;text-align:left;background:none;border:0;padding:14px 16px;cursor:pointer
+}
+.results button:hover{background:var(--med-soft)}
+.results .nm{font-weight:700}
+.results .ad{font-size:13px;color:var(--ink2)}
+.results .raw{color:var(--ink2)}
+.picked{
+  display:flex;align-items:flex-start;gap:12px;background:var(--card);
+  border:1.5px solid var(--med);border-left-width:5px;border-radius:8px;padding:14px 16px
+}
+.picked .nm{font-weight:700}
+.picked .ad{font-size:13px;color:var(--ink2)}
+.picked .undo{margin-left:auto;flex:none;background:none;border:1px solid var(--line);border-radius:6px;padding:6px 12px;font-size:13px;cursor:pointer}
+.badge{display:inline-block;font-family:var(--mono);font-size:11px;padding:2px 7px;border-radius:3px;letter-spacing:.06em;vertical-align:2px}
+.badge.ok{background:var(--med-soft);color:var(--med)}
+.badge.self{background:var(--warn-soft);color:var(--warn)}
+
+/* map mock */
+.mapmock{position:relative;width:100%;height:210px;border:1.5px solid var(--line);border-radius:8px;overflow:hidden;background:#DDE4DA;cursor:crosshair}
+.mapmock svg{display:block;width:100%;height:100%}
+.mapmock .cap{position:absolute;left:8px;bottom:8px;background:rgba(22,40,60,.82);color:#fff;font-size:11px;font-family:var(--mono);padding:3px 8px;border-radius:3px}
+
+/* doctors */
+.dr{display:flex;align-items:center;gap:14px;background:var(--card);border:1.5px solid var(--line);border-radius:var(--r);padding:15px 17px;width:100%;text-align:left;cursor:pointer;min-height:70px}
+.dr:hover{border-color:var(--med)}
+.dr .av{flex:none;width:42px;height:42px;border-radius:50%;background:var(--med-soft);color:var(--med);display:grid;place-items:center;font-weight:700;font-family:var(--serif);font-size:18px}
+.dr .nm{font-weight:700;font-size:18px}
+.dr .sp{font-size:13px;color:var(--ink2)}
+.dr .st{margin-left:auto;font-family:var(--mono);font-size:12px;color:var(--med)}
+.bigred{
+  width:100%;background:var(--urgent);color:#fff;border:0;border-radius:var(--r);
+  padding:22px;font-size:21px;font-weight:700;cursor:pointer;letter-spacing:.03em
+}
+.bigred:hover{background:#A70E27}
+.callbox{background:var(--card);border:1.5px solid var(--line);border-radius:var(--r);padding:22px;text-align:center}
+.callbox .link{font-family:var(--mono);font-size:15px;background:var(--paper);border:1px dashed var(--line);border-radius:6px;padding:12px;margin:14px 0;word-break:break-all}
+.spin{width:34px;height:34px;border:3px solid var(--line);border-top-color:var(--med);border-radius:50%;margin:0 auto 14px;animation:sp .8s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.spin{animation-duration:2.4s}.prog i{transition:none}}
+
+/* ---------- home / board ---------- */
+.topbar .home{background:transparent;border:1px solid #47596D;color:#fff;border-radius:999px;padding:6px 15px;font-size:14px;cursor:pointer;font-weight:700}
+.topbar .home:hover{background:#22374E}
+
+
+#modeHome .hwrap{max-width:900px;margin:0 auto;padding:26px 16px 60px}
+.hlead{color:var(--ink2);font-size:16px;margin:0 0 22px}
+.hgrp{font-size:14px;letter-spacing:.12em;color:var(--ink3);margin:30px 0 12px;padding-bottom:7px;border-bottom:1px solid var(--line);font-weight:700}
+.hgrp:first-of-type{margin-top:0}
+.htabs{display:flex;gap:0;border-bottom:1.5px solid var(--line);margin-bottom:20px}
+.htab{flex:1;background:transparent;border:0;border-bottom:3px solid transparent;
+  padding:14px 10px;font-size:16px;font-weight:700;color:var(--ink3);cursor:pointer;font-family:inherit}
+.htab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--ink)}
+.htab:hover{color:var(--ink2)}
+.hgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.hgrid[hidden]{display:none}
+.hgrid.stack{grid-template-columns:1fr}
+@media(max-width:640px){.hgrid{grid-template-columns:1fr}}
+/* 枚数が変わっても隙間ができないよう、最後の1枚が余ったら全幅にする */
+.hgrid:not(.stack) .hcard:last-of-type:nth-of-type(odd){grid-column:1 / -1}
+.hcard{grid-column:span 1;display:flex;flex-direction:column;align-items:flex-start;gap:4px;text-align:left;
+  background:var(--card);border:1.5px solid var(--line);border-radius:12px;padding:22px;cursor:pointer;
+  transition:border-color .15s,transform .1s;min-height:130px}
+.hcard:hover{border-color:var(--ink3)}
+.hcard:active{transform:translateY(1px)}
+.hcard .ic{font-size:28px;line-height:1}
+.hcard .tt{font-size:21px;font-weight:700;margin-top:6px}
+.hcard .ds{font-size:14px;color:var(--ink2);line-height:1.6}
+.hcard .bd{margin-top:auto;padding-top:10px;font-family:var(--mono);font-size:13px;color:var(--med);font-weight:700}
+.hcard .bd.warn{color:var(--urgent)}
+.hcard.staff{background:#F2F4EF;border-style:dashed}
+.hcard.staff .tt{color:var(--ink)}
+
+.board{background:#0F2032;color:#fff;min-height:calc(100vh - var(--hdr,50px));padding:26px 18px 44px}
+.bwrap{max-width:960px;margin:0 auto;display:grid;grid-template-columns:1.4fr 1fr;gap:18px}
+@media(max-width:760px){.bwrap{grid-template-columns:1fr}}
+.bnow{background:#1B3149;border:1px solid #4A6883;border-radius:12px;padding:26px 22px;text-align:center}
+.bnow .cap{display:block;font-size:17px;color:#D3E0EB;letter-spacing:.1em;font-weight:700}
+.bnowlist{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;margin:10px 0 6px}
+.bnowno{font-family:var(--mono);font-size:76px;line-height:1.1;letter-spacing:.02em}
+.bnowlist .none{font-family:var(--mono);font-size:64px;color:#A9BDCD}
+.bnow .sub{font-size:16px;color:#C3D4E1}
+.bstat{display:grid;gap:18px}
+.bstat>div{background:#1B3149;border:1px solid #4A6883;border-radius:12px;padding:18px 22px;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.bstat .cap{flex:1 0 100%;font-size:15px;color:#D3E0EB;letter-spacing:.08em;font-weight:700}
+.bstat strong{font-family:var(--mono);font-size:44px;line-height:1}
+.bstat .unit{font-size:17px;color:#C3D4E1}
+.bnext{max-width:960px;margin:18px auto 0;background:#1B3149;border:1px solid #4A6883;border-radius:12px;padding:22px 24px}
+.bnext h3{margin:0 0 14px;font-size:17px;color:#D3E0EB;letter-spacing:.08em;font-weight:700}
+.bnext ol{list-style:none;margin:0;padding:0;display:flex;gap:12px;flex-wrap:wrap}
+.bnext li{font-family:var(--mono);font-size:32px;background:#2E4A66;border:1px solid #557A9B;border-radius:8px;padding:10px 18px}
+.bnext.miss{border-color:#E0546E;background:#3B2029}
+.bnext.miss li{background:#7A2233;border-color:#B8465C}
+.bnext li.head{outline:3px solid #fff;outline-offset:2px}
+.ban{font-family:var(--sans);font-size:.45em;margin-left:3px;opacity:.9;font-weight:400}
+.bnowno .ban{font-size:.3em}
+.bnext ol{max-height:none}
+.bnext li.none{font-family:var(--sans);font-size:17px;color:#C3D4E1;background:transparent;border:0;padding:6px 0}
+.bnote{margin:18px 0 0;font-size:15px;color:#C3D4E1;line-height:1.9}
+.bctrl{max-width:960px;margin:18px auto 0;display:flex;gap:12px;flex-wrap:wrap}
+.bctrl .btn{flex:1;min-width:150px;background:#2A4257;border-color:#3E5A73;color:#fff;font-size:16px;padding:14px 18px}
+
+.opt.route-seek[aria-pressed="true"]{border-color:var(--warn);background:var(--warn-soft)}
+.opt.route-seek[aria-pressed="true"] .mark{background:var(--warn);border-color:var(--warn)}
+body[data-route="search"] .btn.next:not(:disabled){background:var(--warn);border-color:var(--warn)}
+body[data-route="search"] .prog i{background:var(--warn)}
+body[data-route="search"] .opt[aria-pressed="true"]{border-color:var(--warn);background:var(--warn-soft)}
+body[data-route="search"] .opt[aria-pressed="true"] .mark{background:var(--warn);border-color:var(--warn)}
+.seekgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:640px){.seekgrid{grid-template-columns:1fr}}
+.ncard{display:flex;flex-direction:column;background:var(--card);border:1.5px solid var(--line);border-left:5px solid var(--warn);border-radius:var(--r);padding:18px 20px;min-height:220px}
+.ncard .nm{font-size:26px;font-weight:700;letter-spacing:.04em}
+.ncard .nm .kn{font-size:14px;font-weight:400;color:var(--ink2);margin-left:10px}
+.ncard .meta{color:var(--ink2);font-size:15px;margin-top:2px}
+.ncard .ft{margin-top:10px;font-size:17px}
+.ncard .ft.empty{color:var(--ink3);font-style:normal;font-size:15px}
+.ncard .ls{margin-top:6px;font-size:15px;color:var(--ink2)}
+.ncard .ls.empty{color:var(--ink3)}
+.ncard .ft2{margin-top:auto;padding-top:12px;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.ncard .scope{font-size:12px;font-family:var(--mono);background:var(--warn-soft);color:var(--warn);border-radius:3px;padding:3px 8px;font-weight:700}
+.ncard .rno{font-size:12px;font-family:var(--mono);color:var(--ink3)}
+.ncard .act{margin-top:12px}
+.ncard .act button{border:1.5px solid var(--line);background:var(--paper);border-radius:8px;padding:10px 16px;font-weight:700;cursor:pointer}
+#alertBar{display:flex;align-items:center;gap:10px;
+  background:var(--med);color:#fff;padding:11px 16px;font-weight:700;font-size:15px}
+#alertBar[hidden]{display:none}
+#alertBar.wait{background:#4A5B6E}
+#alertBar.call{background:var(--adm)}
+#alertBar.call .abtn{color:var(--adm)}
+#alertBar .adot{width:9px;height:9px;border-radius:50%;background:#fff;flex:none;animation:pulse 1.2s infinite}
+#alertBar.wait .adot{animation:none;opacity:.6}
+#alertBar .atxt{flex:1;min-width:0}
+#alertBar .abtn{flex:none;background:#fff;color:var(--med);border:0;border-radius:999px;
+  padding:8px 18px;font-weight:700;font-size:14px;cursor:pointer}
+#alertBar .abtn:hover{background:#EAF3EE}
+#alertBar.wait .abtn{display:none}
+#alertBar .abtn:empty{display:none}
+#dlg{position:fixed;inset:0;z-index:80;background:rgba(22,40,60,.45);display:grid;place-items:center;padding:20px}
+#dlg[hidden]{display:none}
+.dlgbox{background:var(--card);border-radius:12px;max-width:460px;width:100%;padding:24px;box-shadow:0 20px 50px rgba(0,0,0,.25)}
+.dlgbox h3{margin:0 0 10px;font-size:20px}
+.dlgbox p{margin:0 0 20px;color:var(--ink2);line-height:1.8;white-space:pre-wrap}
+.dlgft{display:flex;gap:12px}
+.dlgft .btn{flex:1}
+.dlgft .btn.next{background:var(--ink);border-color:var(--ink);color:#fff}
+#sigModal{position:fixed;inset:0;z-index:60;background:var(--paper);display:flex;flex-direction:column}
+#sigModal[hidden]{display:none}
+#sigModal .smhd{background:var(--ink);color:#fff;padding:14px 18px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex:none}
+#sigModal .smhd .smx{background:transparent;border:1px solid #47596D;color:#fff;border-radius:999px;padding:6px 15px;font-size:14px;cursor:pointer;font-weight:700}
+#sigModal .smft{flex:none}
+#sigModal .smwho{font-size:14px;color:#9FB2C4}
+#sigModal canvas{flex:1 1 0;min-height:0;width:100%;background:var(--card);touch-action:none;display:block}
+#sigModal .smft{display:flex;gap:12px;padding:14px 18px calc(14px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--line)}
+#sigModal .smft .btn{flex:1}
+#sigModal .smft .btn.next{background:var(--ink);border-color:var(--ink);color:#fff}
+.sigopen{width:100%;margin-top:10px;border:1.5px solid var(--ink);background:var(--card);border-radius:8px;padding:14px;font-weight:700;cursor:pointer}
+.pcard{background:var(--card);border:1.5px solid var(--line);border-radius:var(--r);padding:16px 18px;margin-bottom:12px}
+.pcard.overdue{border-left:5px solid var(--urgent)}
+.pcard .hd{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.pcard .no{font-family:var(--mono);font-size:19px;font-weight:700}
+.pcard .kind{font-size:12px;font-family:var(--mono);background:var(--paper);border-radius:3px;padding:2px 7px;color:var(--ink2)}
+.pcard .last{margin-left:auto;font-size:13px;color:var(--ink2)}
+.pcard .last.od{color:var(--urgent);font-weight:700}
+.pcard .where{margin-top:6px;font-size:15px}
+.pcard .risk{margin-top:8px;display:flex;gap:6px;flex-wrap:wrap}
+.pcard .risk span{font-size:12px;background:var(--urgent-soft);color:var(--urgent);border-radius:3px;padding:3px 8px;font-weight:700}
+.pcard .act{margin-top:12px;display:flex;gap:10px;flex-wrap:wrap}
+.pcard .act button{flex:1;min-width:130px;border:1.5px solid var(--line);background:var(--paper);border-radius:8px;padding:11px 14px;font-weight:700;cursor:pointer}
+.pcard .act button.go{background:var(--med);border-color:var(--med);color:#fff}
+.pform{margin-top:14px;border-top:1px solid var(--line2);padding-top:14px}
+.pform .f>label{font-size:13px}
+.pnone{color:var(--ink2);background:var(--card);border:1px dashed var(--line);border-radius:var(--r);padding:26px;text-align:center}
+
+
+@media(max-width:420px){
+  .wrap{padding:16px 12px 96px}
+  h1.q{font-size:23px}
+  .opt{padding:14px 15px;min-height:58px}
+  .opt .lbl{font-size:17px}
+  .btn{padding:14px 18px;font-size:17px}
+  .bnow strong{font-size:58px}
+}
+
+
+
+
+.cutlist{display:flex;flex-direction:column;gap:8px}
+.cutrow{display:flex;gap:10px;align-items:center}
+.cutrow input[type=time]{flex:1;background:var(--card);border:1.5px solid var(--line);border-radius:8px;padding:12px 14px}
+.rxk{font-size:14px;color:var(--ink)}
+.etarow{display:flex;align-items:center;gap:12px;margin-top:14px;justify-content:center;flex-wrap:wrap}
+.etarow label{font-size:14px;color:var(--ink2);font-weight:700}
+.etarow input[type=time]{background:var(--card);border:1.5px solid var(--line);border-radius:8px;padding:10px 14px;font-family:var(--mono)}
+.pick{display:flex;gap:6px;flex-wrap:wrap;width:100%;margin-top:6px}
+.pbtn{border:1.5px solid var(--line);background:var(--paper);border-radius:999px;padding:6px 13px;font-size:13px;font-weight:700;cursor:pointer}
+.pbtn[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:#fff}
+.rxs{font-size:13px;color:var(--ink2)}
+
+.daysel{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.chip.more{border-style:dashed;color:var(--ink2);font-weight:400}
+.chip.more .cnum{background:var(--paper);color:var(--ink3)}
+.netgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:520px){.netgrid{grid-template-columns:1fr}}
+.netgrid>div{background:var(--paper);border-radius:8px;padding:12px 14px;display:flex;align-items:baseline;gap:6px;flex-wrap:wrap}
+.netgrid .k{flex:1 0 100%;font-size:12px;color:var(--ink2)}
+.netgrid b{font-family:var(--mono);font-size:26px}
+.netgrid .u{font-size:13px;color:var(--ink2)}
+.csec.todo{border-style:dashed}
+.todolist{margin:0;padding-left:20px;font-size:14px;color:var(--ink2);line-height:1.9}
+.tflag{font-size:11px;font-family:var(--mono);background:var(--paper);color:var(--ink3);border-radius:3px;padding:2px 6px}
+.rcard{background:var(--card);border:1.5px solid var(--line);border-radius:var(--r);margin-bottom:10px}
+.rhd{display:flex;align-items:center;gap:10px;padding:14px 16px;flex-wrap:wrap}
+.rhd .num{font-family:var(--mono);font-size:18px;font-weight:700}
+.rhd .rname{font-weight:700;font-size:17px}
+.rhd .tm{font-size:12px;color:var(--ink3);font-family:var(--mono)}
+.rhd .mini{margin-left:auto;border:1.5px solid var(--line);background:var(--paper);border-radius:6px;padding:7px 14px;font-size:13px;font-weight:700;cursor:pointer}
+.rtag{font-size:11px;font-family:var(--mono);border-radius:3px;padding:2px 7px;font-weight:700}
+.rtag.medical{background:var(--med-soft);color:var(--med)}
+.rtag.admin{background:var(--adm-soft);color:var(--adm)}
+.rtag.search{background:var(--warn-soft);color:var(--warn)}
+.rflag{font-size:11px;font-weight:700;background:var(--urgent-soft);color:var(--urgent);border-radius:3px;padding:2px 7px}
+.rbd{border-top:1px solid var(--line2);padding:12px 16px 16px}
+.rbd .ln{display:flex;align-items:baseline;gap:6px;font-size:14px;padding:4px 0}
+.rbd .ln dt{color:var(--ink2);flex:none;font-size:13px}
+.rbd .ln .dots{flex:1;border-bottom:1px dotted var(--line);transform:translateY(-3px);min-width:10px}
+.rbd .ln dd{margin:0;font-weight:700;text-align:right}
+
+/* ---------- オンライン診療（通話） ---------- */
+.vwrap{max-width:840px;margin:0 auto;padding:18px 16px 40px}
+.vhead{display:flex;align-items:center;gap:10px;color:var(--ink2);font-size:14px;font-weight:700;margin-bottom:12px}
+.vdot{width:10px;height:10px;border-radius:50%;background:var(--warn);flex:none;animation:pulse 1.2s infinite}
+.vdot.on{background:var(--med);animation:none}
+@keyframes pulse{0%,100%{opacity:.3}50%{opacity:1}}
+.vclock{margin-left:auto;font-family:var(--mono);color:var(--ink)}
+.vstage{position:relative;background:#101B26;border-radius:14px;overflow:hidden;aspect-ratio:16/10;display:grid;place-items:center}
+@media(max-width:640px){.vstage{aspect-ratio:3/4}}
+.vtile.main{width:100%;height:100%;display:grid;place-items:center;gap:12px;align-content:center}
+.vav{width:110px;height:110px;border-radius:50%;background:#24384B;color:#9FD6BC;display:grid;place-items:center;font-family:var(--serif);font-size:44px}
+.vav.sm{width:44px;height:44px;font-size:19px}
+.vname{color:#fff;text-align:center;font-size:20px;font-weight:700}
+.vname span{display:block;font-size:13px;color:#9FB2C4;font-weight:400;margin-top:2px}
+.vmsg{color:#9FB2C4;font-size:15px}
+.vmsg.sm{font-size:11px}
+.vspin{width:40px;height:40px;border:3px solid #2A4257;border-top-color:#9FD6BC;border-radius:50%;animation:sp 1s linear infinite}
+.vtile.self{position:absolute;right:14px;bottom:14px;width:120px;height:96px;background:#1B2C3C;border:1px solid #33506B;border-radius:10px;display:grid;place-items:center;gap:4px}
+.vtile.self.off{background:#16232F}
+.vlabel{position:absolute;left:8px;bottom:6px;color:#9FB2C4;font-size:11px}
+.vshare{position:absolute;left:14px;top:14px;right:150px;background:rgba(255,255,255,.96);border-radius:10px;padding:12px 14px}
+@media(max-width:640px){.vshare{right:14px;bottom:120px;overflow:auto}}
+.vshareHd{font-size:13px;font-weight:700}
+.vshareBd{font-size:12px;color:var(--ink2);margin:6px 0 0;padding-left:18px;line-height:1.7}
+.vshareBd li{margin:2px 0}
+.vshareFt{font-size:11px;color:var(--ink3);margin-top:8px;border-top:1px solid var(--line2);padding-top:6px}
+.vbar{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap}
+.vbtn{flex:1;min-width:78px;background:var(--card);border:1.5px solid var(--line);border-radius:12px;padding:14px 8px;cursor:pointer;font-size:22px;line-height:1.1}
+.vbtn span{display:block;font-size:12px;font-weight:700;color:var(--ink2);margin-top:6px}
+.vbtn.off{background:#EDEFEA;color:var(--ink3)}
+.vbtn.on{border-color:var(--med);background:var(--med-soft)}
+.vbtn.end{background:var(--urgent);border-color:var(--urgent);color:#fff}
+.vbtn.end span{color:#fff}
+.vdoc{margin-top:16px;background:var(--card);border:1.5px solid var(--line);border-radius:8px}
+.vdoc summary{cursor:pointer;padding:12px 16px;font-weight:700;font-size:14px}
+.vdocbd{padding:0 16px 14px}
+.vdocbd .ln{display:flex;align-items:baseline;gap:6px;font-size:14px;padding:4px 0}
+.vdocbd .ln dt{color:var(--ink2);flex:none;font-size:13px}
+.vdocbd .ln .dots{flex:1;border-bottom:1px dotted var(--line);transform:translateY(-3px);min-width:10px}
+.vdocbd .ln dd{margin:0;font-weight:700;text-align:right}
+.vnote{margin:14px 0 0;font-size:13px;color:var(--ink3)}
+
+/* ---------- 呼び出し操作 ---------- */
+.csec.nowsec{border-color:var(--med);border-left:5px solid var(--med)}
+.nowcard{border-top:1px solid var(--line2);padding:14px 0}
+.nowcard:first-of-type{border-top:0;padding-top:2px}
+.nowhd{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.nowhd .num{font-family:var(--mono);font-size:30px;font-weight:700;color:var(--med)}
+.nowhd .nm{font-size:17px;font-weight:700}
+.nowcard .act{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap}
+.nowcard .act .btn{flex:1;min-width:130px;padding:12px 14px;font-size:15px}
+.cnow{background:var(--card);border:1.5px solid var(--line);border-radius:var(--r);padding:22px;text-align:center;margin-bottom:16px}
+.cnow.on{border-color:var(--med);border-width:2px}
+.cnow .lbl{font-size:14px;color:var(--ink2);letter-spacing:.1em}
+.cnow .num{font-family:var(--mono);font-size:52px;line-height:1.2;margin:4px 0 2px}
+.cnow.on .num{color:var(--med)}
+.cnow .act{display:flex;gap:12px;margin-top:14px}
+.cnow .act .btn{flex:1}
+.csec{background:var(--card);border:1.5px solid var(--line);border-radius:var(--r);padding:18px 20px;margin-bottom:14px}
+.csec.warnsec{border-color:var(--urgent);border-left-width:5px}
+.csec>h2{font-size:15px;margin:0 0 12px;color:var(--ink2);letter-spacing:.06em}
+.csec .note{margin:0;font-size:14px;color:var(--ink3)}
+.cnext{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.cnext .num{font-family:var(--mono);font-size:34px;font-weight:700}
+.cnext .btn{margin-left:auto}
+.btn.go{background:var(--med);border-color:var(--med);color:#fff}
+.btn.go:disabled{background:#AEB8B0;border-color:#AEB8B0;cursor:not-allowed}
+.uflag{background:var(--urgent-soft);color:var(--urgent);font-size:12px;font-weight:700;border-radius:3px;padding:3px 8px}
+.why{display:flex;gap:6px;flex-wrap:wrap}
+.clist .wname{font-size:15px}
+.clist li{flex-wrap:wrap}
+.clist{list-style:none;margin:0;padding:0}
+.clist li{display:flex;align-items:center;gap:10px;padding:11px 0;border-top:1px solid var(--line2);flex-wrap:wrap}
+.clist li:first-child{border-top:0}
+.clist .ord{flex:none;width:24px;height:24px;border-radius:50%;background:var(--paper);color:var(--ink2);display:grid;place-items:center;font-size:12px;font-family:var(--mono)}
+.clist .num{font-family:var(--mono);font-size:20px;font-weight:700}
+.clist .tm{font-size:13px;color:var(--ink3);font-family:var(--mono)}
+.clist .mini{margin-left:auto;border:1.5px solid var(--line);background:var(--paper);border-radius:6px;padding:7px 14px;font-size:13px;font-weight:700;cursor:pointer}
+.clist .mini:hover{border-color:var(--ink3)}
+
+/* ---------- 設定：地方グループ ---------- */
+.chip .cnum{display:inline-block;margin-left:7px;background:var(--med-soft);color:var(--med);border-radius:999px;font-family:var(--mono);font-size:11px;padding:1px 6px;font-weight:700}
+.chip[aria-pressed="true"] .cnum{background:rgba(255,255,255,.22);color:#fff}
+.prefsel{display:flex;flex-direction:column;gap:8px}
+.rgroup{background:var(--card);border:1.5px solid var(--line);border-radius:8px}
+.rgroup summary{cursor:pointer;padding:12px 16px;font-weight:700;list-style:none;display:flex;align-items:center;gap:10px}
+.rgroup summary::-webkit-details-marker{display:none}
+.rgroup summary::before{content:"▸";color:var(--ink3);flex:none}
+.rgroup[open] summary::before{content:"▾"}
+.rgroup summary .cnt{font-family:var(--mono);font-size:12px;color:var(--ink2);background:var(--paper);border-radius:3px;padding:2px 8px}
+.rgroup summary .rgall{margin-left:auto;font-size:13px;font-weight:700;color:var(--adm);border:1px solid var(--line);border-radius:6px;padding:5px 12px;background:var(--card)}
+.rgroup summary .rgall:hover{background:var(--adm-soft)}
+.rgroup .chips{padding:0 16px 14px}
+
+/* ---------- help / QR / print ---------- */
+details.help{background:var(--card);border:1.5px solid var(--line);border-radius:8px;margin:0 0 20px}
+details.help summary{cursor:pointer;padding:12px 16px;font-weight:700;font-size:15px;list-style:none;display:flex;align-items:center;gap:8px}
+details.help summary::-webkit-details-marker{display:none}
+details.help summary::before{content:"？";flex:none;width:22px;height:22px;border-radius:50%;background:var(--ink);color:#fff;display:grid;place-items:center;font-size:13px}
+details.help summary::after{content:"▾";margin-left:auto;color:var(--ink3)}
+details.help[open] summary::after{content:"▴"}
+details.help p{margin:0;padding:0 16px 14px;font-size:15px;color:var(--ink2);line-height:1.8}
+
+.qrbox{background:var(--card);border:1px solid var(--line);border-radius:8px;margin-top:20px;overflow:hidden}
+.qrhd{background:var(--ink);color:#fff;padding:11px 18px;font-family:var(--serif);letter-spacing:.16em;font-size:15px}
+.qrbd{display:flex;gap:20px;padding:20px;flex-wrap:wrap;align-items:flex-start}
+.qrimg{flex:none;background:#fff;padding:8px;border:1px solid var(--line2);border-radius:6px}
+.qrimg svg{display:block;max-width:100%;height:auto}
+.qrlist{flex:1;min-width:210px;margin:0}
+.qrlist>div{display:flex;align-items:baseline;gap:8px;padding:5px 0;border-bottom:1px dotted var(--line)}
+.qrlist dt{flex:none;font-size:13px;color:var(--ink2);width:84px}
+.qrlist dd{margin:0;font-weight:700;font-size:16px}
+.qrnote{margin:0;padding:0 20px 18px;font-size:14px;color:var(--ink2);line-height:1.8}
+.qract{padding:0 20px 20px}
+.qract .btn{width:100%}
+
+.guide{background:var(--card);border:1.5px solid var(--line);border-radius:8px;padding:24px;margin-top:20px}
+.guide h2{font-size:17px;margin:26px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--line2)}
+.guide h2:first-child{margin-top:0}
+.guide ol,.guide ul{margin:0;padding-left:22px}
+.guide li{margin:8px 0;line-height:1.8}
+.guide small{color:var(--ink2)}
+
+@media print{
+  .topbar,.nav,.no-print,details.help,.prog,.slipToggle{display:none !important}
+  body{background:#fff}
+  .wrap{display:block;padding:0;max-width:none}
+  .qrbox,.guide{border:1px solid #999;box-shadow:none;break-inside:avoid}
+  .qrhd{background:#fff;color:#000;border-bottom:1px solid #999}
+  .callbox{border:1px solid #999}
+}
+
+/* consent */
+.consent{background:var(--card);border:1.5px solid var(--warn);border-radius:var(--r);padding:20px}
+.consent p{margin:0 0 14px;font-size:16px}
+.consent ul{margin:0 0 16px;padding-left:22px;font-size:15px;color:var(--ink2)}
+.consent li{margin:4px 0}
+.sigwrap{position:relative;background:var(--card);border:1.5px solid var(--line);border-radius:8px;overflow:hidden}
+.sigwrap canvas{display:block;width:100%;height:170px;touch-action:none;cursor:crosshair}
+.sigwrap .base{position:absolute;left:22px;right:22px;bottom:38px;border-bottom:1px dashed var(--line);pointer-events:none}
+.sigwrap .ph{position:absolute;left:24px;bottom:44px;color:var(--ink3);font-size:14px;pointer-events:none}
+.sigclear{position:absolute;right:10px;top:10px;background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:6px 14px;font-size:13px;cursor:pointer}
+.stamp{background:var(--paper);border:1px solid var(--line2);border-radius:6px;padding:12px 14px;font-family:var(--mono);font-size:13px;color:var(--ink2);line-height:1.8}
+
+/* nav */
+.nav{
+  position:fixed;left:0;right:0;bottom:0;z-index:20;background:rgba(231,234,228,.96);
+  border-top:1px solid var(--line);padding:12px 16px calc(12px + env(safe-area-inset-bottom,0px));
+  display:flex;gap:12px;justify-content:center;backdrop-filter:blur(6px)
+}
+.nav .inner{max-width:1120px;width:100%;display:flex;gap:12px}
+.btn{border-radius:var(--r);padding:16px 26px;font-size:18px;font-weight:700;cursor:pointer;border:1.5px solid var(--line);background:var(--card)}
+.btn.back{flex:none;min-width:110px}
+.btn.next{flex:1;background:var(--ink);border-color:var(--ink);color:#fff}
+.btn.next:disabled{background:#AEB8B0;border-color:#AEB8B0;cursor:not-allowed}
+body[data-route="medical"] .btn.next:not(:disabled){background:var(--med);border-color:var(--med)}
+body[data-route="admin"] .btn.next:not(:disabled){background:var(--adm);border-color:var(--adm)}
+
+/* ---------- slip (signature) ---------- */
+.slip{position:sticky;top:calc(var(--hdr, 50px) + 16px);background:var(--card);border:1px solid var(--line);border-radius:4px;box-shadow:0 1px 0 var(--line2),0 10px 24px rgba(22,40,60,.07)}
+.slip .perf{height:12px;background:
+  radial-gradient(circle at 6px 6px, var(--paper) 4.5px, transparent 5px) repeat-x;
+  background-size:12px 12px;border-bottom:1px dashed var(--line)}
+.slip .hd{padding:14px 18px 10px;border-bottom:1px solid var(--line2)}
+.slip .hd h2{font-family:var(--serif);font-size:17px;margin:0;letter-spacing:.22em}
+.slip .hd .no{font-family:var(--mono);font-size:11px;color:var(--ink3);margin-top:3px}
+.slip .bd{padding:12px 18px 20px;max-height:calc(100vh - var(--hdr, 50px) - 160px);overflow:auto}
+.slip .grp{margin-top:14px}
+.slip .grp:first-child{margin-top:4px}
+.slip .grp>h3{font-size:11px;font-family:var(--mono);letter-spacing:.14em;color:var(--ink3);margin:0 0 6px;border-bottom:1px solid var(--line2);padding-bottom:4px}
+.slip dl{margin:0}
+.slip .ln{display:flex;align-items:baseline;gap:6px;font-size:14px;padding:3px 0}
+.slip .ln dt{color:var(--ink2);flex:none;font-size:13px}
+.slip .ln .dots{flex:1;border-bottom:1px dotted var(--line);transform:translateY(-3px);min-width:10px}
+.slip .ln dd{margin:0;font-weight:700;text-align:right}
+.slip .empty{color:var(--ink3);font-size:14px;padding:10px 0}
+.slip .flag{font-family:var(--mono);font-size:10px;padding:1px 5px;border-radius:3px;margin-left:5px}
+.slip .flag.med{background:var(--med-soft);color:var(--med)}
+.slip .flag.adm{background:var(--adm-soft);color:var(--adm)}
+.slip .flag.urg{background:var(--urgent-soft);color:var(--urgent)}
+@media(max-width:900px){
+  .slip{position:static}
+  .slip .bd{max-height:none}
+  .slipToggle{width:100%;background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px;font-weight:700;cursor:pointer;text-align:left}
+  .slip[hidden]{display:none}
+}
+@media(min-width:901px){.slipToggle{display:none}}
+</style>
+</head>
+<body data-route="">
+
+<div id="topStack">
+<header class="topbar">
+  <button class="home" id="btnHome" hidden>← ホームへ</button>
+  <span class="brand" id="brandLbl">受付票</span>
+  <span class="site" id="siteName">避難所 未設定</span>
+  <span class="term" id="termName" hidden></span>
+  <span class="spacer"></span>
+  <button class="reset" id="btnReset" hidden>最初からやり直す</button>
+</header>
+<div class="prog"><i id="progBar" style="width:0%"></i></div>
+<div id="alertBar" hidden>
+  <span class="adot"></span>
+  <span class="atxt" id="alertText"></span>
+  <button class="abtn" id="alertGo">通話をはじめる</button>
+</div>
+</div><!-- /topStack -->
+<section id="modeHome">
+  <div class="hwrap">
+    <div class="htabs" role="tablist">
+      <button class="htab" data-htab="guest" role="tab" aria-selected="false">避難されている方</button>
+      <button class="htab" data-htab="staff" role="tab" aria-selected="true">避難所のスタッフの方</button>
+    </div>
+    <p class="hlead">使うものを選んでください</p>
+
+    <div id="hGuest" class="hgrid stack" hidden>
+      <button class="hcard" data-go="board">
+        <span class="ic">📋</span>
+        <span class="tt">いまの待ち状況を見る</span>
+        <span class="ds">診察中の番号と、お待ちの番号がすべて出ます。受付でお渡しした番号をお探しください</span>
+        <span class="bd" id="hBoard">0人待ち</span>
+      </button>
+      <button class="hcard" data-go="seek">
+        <span class="ic">👤</span>
+        <span class="tt">さがしている人</span>
+        <span class="ds">家族・知人をさがしている方の掲示です。心当たりのある方は受付へお声がけください</span>
+        <span class="bd" id="hSeek">0件</span>
+      </button>
+    </div>
+
+    <div id="hStaff" class="hgrid">
+      <button class="hcard staff" data-go="intake">
+        <span class="ic">✏️</span>
+        <span class="tt">受付をする</span>
+        <span class="ds">からだ・薬の相談／生活・物資の相談／人をさがす</span>
+      </button>
+      <button class="hcard staff" data-go="call">
+        <span class="ic">📢</span>
+        <span class="tt">呼び出しの操作</span>
+        <span class="ds">次の方を呼ぶ／診察を終える。掲示に反映されます</span>
+        <span class="bd" id="hCall">—</span>
+      </button>
+      <button class="hcard staff" data-go="rx">
+        <span class="ic">💊</span>
+        <span class="tt">お薬のリクエスト</span>
+        <span class="ds">締め切りまでにまとめて送る</span>
+        <span class="bd" id="hRx">未送信なし</span>
+      </button>
+      <button class="hcard staff" data-go="patrol">
+        <span class="ic">🚗</span>
+        <span class="tt">巡回する</span>
+        <span class="ds">車中泊・在宅の方をまわって確認</span>
+        <span class="bd warn" id="hPat">0人 要確認</span>
+      </button>
+      <button class="hcard staff" data-go="rec">
+        <span class="ic">🗂</span>
+        <span class="tt">受付の記録</span>
+        <span class="ds">番号の照会・引き継ぎ。中身は開いたときだけ出ます</span>
+        <span class="bd" id="hRec">0件</span>
+      </button>
+      <button class="hcard staff" data-go="net">
+        <span class="ic">🌐</span>
+        <span class="tt">全体の状況</span>
+        <span class="ds">ほかの避難所の待ち人数と、対応できる医師の数</span>
+        <span class="bd" id="hNet">—</span>
+      </button>
+      <button class="hcard staff" data-go="config">
+        <span class="ic">⚙️</span>
+        <span class="tt">設定</span>
+        <span class="ds">役割・避難所・担当者・検索する地域</span>
+        <span class="bd warn" id="hCfg">未設定</span>
+      </button>
+      <button class="hcard staff" data-go="help">
+        <span class="ic">📖</span>
+        <span class="tt">使い方をみる</span>
+        <span class="ds">受付の流れ、迷ったときの原則。印刷して受付に貼れます</span>
+      </button>
+    </div>
+  </div>
+</section>
+
+<div id="modeIntake">
+<div class="wrap">
+  <main>
+    <div id="screen"></div>
+  </main>
+
+  <aside>
+    <button class="slipToggle" id="slipToggle" aria-expanded="false">記入内容を見る ▾</button>
+    <section class="slip" id="slip" aria-label="記入中の受付票">
+      <div class="perf" aria-hidden="true"></div>
+      <div class="hd">
+        <h2>受付票</h2>
+        <div class="no" id="slipNo">No. ——</div>
+      </div>
+      <div class="bd" id="slipBody"></div>
+    </section>
+  </aside>
+</div>
+
+<nav class="nav" id="navBar">
+  <div class="inner">
+    <button class="btn back" id="btnBack">もどる</button>
+    <button class="btn next" id="btnNext">次へ</button>
+  </div>
+</nav>
+</div><!-- /modeIntake -->
+
+<section id="modeBoard" hidden>
+  <div class="board">
+    <div class="bwrap">
+      <div class="bnow">
+        <span class="cap">ただいま診察中</span>
+        <div id="bNow" class="bnowlist"><span class="none">——</span></div>
+        <span class="sub" id="bNowSub">呼び出しはまだありません</span>
+      </div>
+      <div class="bstat">
+        <div><span class="cap">ほかの避難所もあわせて</span><strong id="bNet">—</strong><span class="unit">人</span></div>
+        <div><span class="cap">お薬のお願い締め切り</span><strong id="bCut" style="font-size:30px">—</strong></div>
+        <div><span class="cap">お待ちの方</span><strong id="bWait">0</strong><span class="unit">人</span></div>
+        <div><span class="cap">お待ち時間の目安</span><strong id="bEta">0</strong><span class="unit">分</span></div>
+      </div>
+    </div>
+    <div class="bnext">
+      <h3>お待ちの番号（左から順にお呼びします）</h3>
+      <ol id="bList"><li class="none">お待ちの方はいません</li></ol>
+      <p class="bnote">お名前は表示しません。受付でお渡しした番号をお探しください。<br>番号の順ではなく、左から順にお呼びします。お体の状態によって、順番が前後することがあります。</p>
+    </div>
+    <div class="bnext miss" id="bMissWrap" hidden>
+      <h3>お呼びしましたが、まだお越しでない番号</h3>
+      <ol id="bMiss"></ol>
+      <p class="bnote">この番号の方は、受付にお声がけください。すぐにご案内します。</p>
+    </div>
+
+  </div>
+</section>
+
+<div id="dlg" hidden>
+  <div class="dlgbox" role="dialog" aria-modal="true">
+    <h3 id="dlgTitle"></h3>
+    <p id="dlgBody"></p>
+    <div class="dlgft">
+      <button class="btn" id="dlgNo">やめる</button>
+      <button class="btn next" id="dlgYes">OK</button>
+    </div>
+  </div>
+</div>
+
+<div id="sigModal" hidden>
+  <div class="smhd"><span>サインをお願いします</span><span class="smwho" id="smWho"></span>
+    <button class="smx" id="smCancel">とじる</button></div>
+  <canvas id="sigBig"></canvas>
+  <div class="smft">
+    <button class="btn" id="smClear">消す</button>
+    <button class="btn next" id="smDone">書き終わった</button>
+  </div>
+</div>
+
+<section id="modeVideo" hidden>
+  <div id="videoBody"></div>
+</section>
+
+<section id="modeNet" hidden>
+  <div class="wrap" style="grid-template-columns:1fr;max-width:760px">
+    <main>
+      <div class="stepno">全体の状況</div>
+      <h1 class="q">ほかの避難所と医師の状況</h1>
+      <p class="hint">サーバーにつないだときの画面です。いまはすべて仮の値で動いています。</p>
+      <div id="netBody"></div>
+    </main>
+  </div>
+</section>
+
+<section id="modeRec" hidden>
+  <div class="wrap" style="grid-template-columns:1fr;max-width:760px">
+    <main>
+      <div class="stepno">受付の記録</div>
+      <h1 class="q">これまでの受付</h1>
+      <p class="hint">番号を忘れた方の照会や、交代したスタッフへの引き継ぎに使います。中身は開いたときだけ表示されます。</p>
+      <div id="recBody"></div>
+    </main>
+  </div>
+</section>
+
+<section id="modeRx" hidden>
+  <div class="wrap" style="grid-template-columns:1fr;max-width:760px">
+    <main>
+      <div class="stepno">お薬のリクエスト</div>
+      <h1 class="q">お薬をまとめて頼む</h1>
+      <p class="hint">お薬の相談を受けた方が、ここに並びます。締め切りまでにまとめて送ってください。</p>
+      <div id="rxBody"></div>
+    </main>
+  </div>
+</section>
+
+<section id="modeCall" hidden>
+  <div class="wrap" style="grid-template-columns:1fr;max-width:760px">
+    <main>
+      <div class="stepno">呼び出しの操作</div>
+      <h1 class="q">順番を進める</h1>
+      <p class="hint">ここでの操作が、掲示の「待ち状況」に反映されます。掲示は別の端末やモニターに映してください。</p>
+      <div id="callBody"></div>
+    </main>
+  </div>
+</section>
+
+<section id="modeConfig" hidden>
+  <div class="wrap" style="grid-template-columns:1fr;max-width:760px">
+    <main>
+      <div class="stepno">設定</div>
+      <h1 class="q">この端末の設定</h1>
+      <p class="hint">受付を始める前に、一度だけ設定します。次の方からは自動で使われるので、受付の画面では聞きません。</p>
+      <div id="cfgBody"></div>
+    </main>
+  </div>
+</section>
+
+<section id="modeHelp" hidden>
+  <div class="wrap" style="grid-template-columns:1fr;max-width:760px">
+    <main>
+      <div class="stepno">使い方</div>
+      <h1 class="q">はじめての方へ</h1>
+      <p class="hint">受付を担当するスタッフ向けの案内です。印刷して受付に貼っておくこともできます。</p>
+      <div class="qrbox">
+        <div class="qrhd">スマートフォンで読む</div>
+        <div class="qrbd">
+          <div class="qrimg" id="helpQr"></div>
+          <p class="qrnote" style="margin:0">この案内をご自分のスマートフォンでも開けます。<br>受付をしながら手元で確認できます。</p>
+        </div>
+        <div class="qract no-print"><button class="btn" onclick="window.print()">印刷する</button></div>
+      </div>
+      <div class="guide">
+        <h2>1. 受付の流れ</h2>
+        <ol>
+          <li>避難所と、聞き取りをする自分の名前を入れる（最初の1回だけ）</li>
+          <li>いちばん困っていることを1つ選ぶ<br><small>からだ・薬 → 医師へ／物資・生活 → 災害対策本部へ／人をさがす → 掲示へ</small></li>
+          <li>受付に来たのが本人か家族かを選ぶ</li>
+          <li>名前と、たずねてこられた方への対応を聞く</li>
+          <li>いまどこで寝泊まりしているかを聞く</li>
+          <li>用件ごとの質問に答える</li>
+          <li>共有してよいか確認し、サインをもらう</li>
+          <li>番号を紙に書いてお渡しする</li>
+        </ol>
+        <h2>2. 迷ったときの原則</h2>
+        <ul>
+          <li><b>必須の印がない項目は飛ばしてよい</b>。急ぐときは名前だけで先に進めます</li>
+          <li><b>緊急かどうかはスタッフが決める</b>。システムは自動で判断しません</li>
+          <li><b>本人が嫌がっているときは進めない</b>。家族が代わりに来ていても同じです</li>
+          <li><b>理由は聞かない</b>。居場所を知られたくない、名前を残したくない、という申し出には理由を尋ねません</li>
+        </ul>
+        <h2>3. お薬のこと</h2>
+        <ul>
+          <li>お薬の相談を受けた方は、<b>「お薬のリクエスト」</b>に自動で並びます</li>
+          <li>締め切りの前に、まとめて送ってください</li>
+          <li>処方箋がなくても、<b>お薬手帳や薬の包装</b>で内容が確認できれば、薬剤師がお薬を用意できる取り扱いがあります（災害時の特例）</li>
+          <li>お薬手帳やマイナンバーカードは<b>写真に撮らず</b>、通話中にカメラへかざして読み取ってもらいます。立てかけられる台があると、手ぶれがなくて読みやすくなります</li>
+          <li>オンライン診療を受けた方は、医師の名前が一緒に送られます</li>
+          <li>受け取り方は<b>「本人が取りに来る」「巡回で届ける」</b>から選べます。車中泊や自宅の方でも、動ける方には目安の時刻をお伝えして取りに来ていただけます</li>
+          <li>目安の時刻を過ぎても取りに来られない方は、様子を見に行ってください</li>
+          <li>締め切りが近い時間に薬が切れている方は、待ちの列で先に呼ばれます</li>
+        </ul>
+        <h2>4. 受付が終わったら</h2>
+        <ul>
+          <li>番号を紙に書いて渡す。掲示の「待ち状況」で自分の番号を探してもらう</li>
+          <li>QRコードは、その方のスマートフォンで撮ってもらう。ほかの避難所へ移るときに見せると聞き直しが減る</li>
+          <li>避難所の外に泊まる方は「巡回」の一覧に自動で入る。時間が経つと赤くなるので、順に回る</li>
+        </ul>
+        <h2>5. 呼び出しの順番</h2>
+        <ul>
+          <li>掲示の番号は<b>受付の順</b>に左から並びます。番号の順ではありません（複数の端末で受け付けると番号が飛ぶため）</li>
+          <li>設定の<b>「診察の席数」</b>を増やすと、その数だけ同時に呼べます。診察できる場所の数に合わせてください</li>
+          <li>順番が前後する理由は、<b>スタッフの画面にだけ</b>出ます（薬が切れている／配送の締め切りが近い／スタッフが今すぐと判断）</li>
+          <li>掲示では番号の見た目を変えていません。誰が急いでいるかを、周りの方に知らせないためです</li>
+        </ul>
+        <h2>6. 端末の役割</h2>
+        <ul>
+          <li>設定で、この端末の役割を選べます。<b>受付する／診察する／掲示する／巡回する</b></li>
+          <li>役割によって、ホームに出るものと、上に出る通知の文言が変わります</li>
+          <li>受付はタブレット、<b>診察はノートパソコン</b>、掲示はモニター、巡回はスタッフのスマートフォン、というように分けて使えます</li>
+          <li>診察を別の端末にすると、受付を止めずに通話ができます。間仕切りのある場所に置いてください</li>
+        </ul>
+        <h2>7. 画面ごとの使い方</h2>
+        <p>各画面の上にある「この画面の使い方」を開くと、その場で確認できます。</p>
+      </div>
+    </main>
+  </div>
+</section>
+
+<section id="modeSeek" hidden>
+  <div class="wrap" style="grid-template-columns:1fr;max-width:760px">
+    <main>
+      <div class="stepno">さがす</div>
+      <h1 class="q">家族・知人をさがしています</h1>
+      <p class="hint">心当たりのある方、ご自分のことだと思う方は、受付までお声がけください。この画面から直接連絡することはできません。</p>
+      <p class="hint info">掲載をやめてほしい方は、受付にお申し出ください。すぐに取り下げます。<br>お名前を見つけても、その方の居場所をその場でお伝えすることはありません。必ずご本人に確かめてからになります。</p>
+      <div id="seekList"></div>
+    </main>
+  </div>
+</section>
+
+<section id="modePatrol" hidden>
+  <div class="wrap" style="grid-template-columns:1fr;max-width:760px">
+    <main>
+      <div class="stepno">巡回</div>
+      <h1 class="q">車中泊・在宅の方をまわる</h1>
+      <p class="hint">受付で登録された、避難所の中にいない方の一覧です。前回の確認から時間が経った人が上に来ます。</p>
+      <div id="patList"></div>
+    </main>
+  </div>
+</section>
+
+
+
+<script>
+/* ============ ダイアログ（サンドボックス環境で alert/confirm が使えないため自前） ============ */
+function dlgOpen({title, body, yes="OK", no=null, onYes=null}){
+  const d=document.getElementById("dlg");
+  document.getElementById("dlgTitle").textContent=title;
+  document.getElementById("dlgBody").textContent=body||"";
+  const by=document.getElementById("dlgYes"), bn=document.getElementById("dlgNo");
+  by.textContent=yes;
+  bn.hidden = !no; if(no) bn.textContent=no;
+  const close=()=>{ d.hidden=true; document.removeEventListener("keydown",esc); };
+  const esc=e=>{ if(e.key==="Escape") close(); };
+  document.addEventListener("keydown",esc);
+  by.onclick=()=>{ close(); if(onYes) onYes(); };
+  bn.onclick=close;
+  d.onclick=e=>{ if(e.target===d) close(); };
+  d.hidden=false;
+  by.focus();
+}
+const notify=(title,body)=>dlgOpen({title,body,yes:"とじる"});
+const ask=(title,body,onYes,yes="はい",no="やめる")=>dlgOpen({title,body,yes,no,onYes});
+
+/* ============ 内蔵QRコード生成（byte mode / EC level L / version 1-9） ============ */
+const QR = (function(){
+  const EXP = new Array(256), LOG = new Array(256);
+  for(let i=0, x=1; i<255; i++){ EXP[i]=x; LOG[x]=i; x<<=1; if(x&0x100) x^=0x11D; }
+  EXP[255]=EXP[0];
+  const mul = (a,b)=> (a===0||b===0) ? 0 : EXP[(LOG[a]+LOG[b])%255];
+
+  // [総コードワード, データコードワード] × ブロック数（レベルL、1〜9はブロック構成が均一）
+  const RS = {1:[26,19,1],2:[44,34,1],3:[70,55,1],4:[100,80,1],5:[134,108,1],
+              6:[86,68,2],7:[98,78,2],8:[121,97,2],9:[146,116,2]};
+  const ALIGN = {1:[],2:[6,18],3:[6,22],4:[6,26],5:[6,30],6:[6,34],7:[6,22,38],8:[6,24,42],9:[6,26,46]};
+  const VERINFO = {7:0x07C94, 8:0x085BC, 9:0x09A99};
+  const FORMAT_L0 = 0x77C4; // レベルL・マスク0
+
+  function genPoly(n){
+    let p=[1];
+    for(let i=0;i<n;i++){
+      const q=[...p,0];
+      for(let j=0;j<p.length;j++) q[j+1]^=mul(p[j],EXP[i]);
+      p=q;
+    }
+    return p;
+  }
+  function ecc(data,n){
+    const gen=genPoly(n), res=new Array(n).fill(0);
+    for(const d of data){
+      const f=d^res[0];
+      res.shift(); res.push(0);
+      if(f!==0) for(let i=0;i<n;i++) res[i]^=mul(gen[i+1],f);
+    }
+    return res;
+  }
+
+  function encode(text){
+    const bytes = Array.from(new TextEncoder().encode(text));
+    let ver=0;
+    for(let v=1;v<=9;v++){
+      const [tot,dat,blk]=RS[v];
+      if(bytes.length <= dat*blk - 2){ ver=v; break; }
+    }
+    if(!ver) return null;               // 収まらない
+    const [totC,datC,blocks]=RS[ver];
+    const ecLen = totC-datC;
+
+    // ビット列
+    const bits=[];
+    const put=(v,n)=>{ for(let i=n-1;i>=0;i--) bits.push((v>>>i)&1); };
+    put(4,4); put(bytes.length,8);
+    for(const b of bytes) put(b,8);
+    const cap = datC*blocks*8;
+    for(let i=0;i<4 && bits.length<cap;i++) bits.push(0);
+    while(bits.length%8) bits.push(0);
+    const words=[];
+    for(let i=0;i<bits.length;i+=8){ let v=0; for(let j=0;j<8;j++) v=(v<<1)|bits[i+j]; words.push(v); }
+    const PAD=[0xEC,0x11];
+    for(let i=0; words.length<datC*blocks; i++) words.push(PAD[i%2]);
+
+    // ブロック分割・RS・インターリーブ
+    const dBlocks=[], eBlocks=[];
+    for(let b=0;b<blocks;b++){
+      const d=words.slice(b*datC,(b+1)*datC);
+      dBlocks.push(d); eBlocks.push(ecc(d,ecLen));
+    }
+    const out=[];
+    for(let i=0;i<datC;i++) for(let b=0;b<blocks;b++) out.push(dBlocks[b][i]);
+    for(let i=0;i<ecLen;i++) for(let b=0;b<blocks;b++) out.push(eBlocks[b][i]);
+
+    // 行列
+    const size = ver*4+17;
+    const m = Array.from({length:size},()=>new Array(size).fill(null));
+    const probe=(r,c)=>{
+      for(let i=-1;i<=7;i++) for(let j=-1;j<=7;j++){
+        const rr=r+i, cc=c+j;
+        if(rr<0||rr>=size||cc<0||cc>=size) continue;
+        m[rr][cc] = (0<=i&&i<=6&&(j===0||j===6)) || (0<=j&&j<=6&&(i===0||i===6)) || (2<=i&&i<=4&&2<=j&&j<=4);
+      }
+    };
+    probe(0,0); probe(size-7,0); probe(0,size-7);
+    for(let i=8;i<size-8;i++){ const v=i%2===0; if(m[i][6]===null) m[i][6]=v; if(m[6][i]===null) m[6][i]=v; }
+    const al=ALIGN[ver];
+    for(const r of al) for(const c of al){
+      if(m[r][c]!==null) continue;
+      for(let i=-2;i<=2;i++) for(let j=-2;j<=2;j++)
+        m[r+i][c+j] = (Math.abs(i)===2||Math.abs(j)===2||(i===0&&j===0));
+    }
+    if(ver>=7){
+      const bitsV=VERINFO[ver];
+      for(let i=0;i<18;i++){
+        const b=((bitsV>>>i)&1)===1;
+        m[Math.floor(i/3)][i%3+size-8-3]=b;
+        m[i%3+size-8-3][Math.floor(i/3)]=b;
+      }
+    }
+    // フォーマット情報（先に予約）
+    const setFmt=()=>{
+      for(let i=0;i<15;i++){
+        const b=((FORMAT_L0>>>i)&1)===1;
+        if(i<6) m[i][8]=b; else if(i<8) m[i+1][8]=b; else m[size-15+i][8]=b;
+        if(i<8) m[8][size-i-1]=b; else if(i<9) m[8][15-i-1+1]=b; else m[8][15-i-1]=b;
+      }
+      m[size-8][8]=true;
+    };
+    setFmt();
+
+    // データ配置＋マスク0
+    let inc=-1, row=size-1, bi=7, wi=0;
+    for(let col=size-1; col>0; col-=2){
+      if(col===6) col--;
+      for(;;){
+        for(let c=0;c<2;c++){
+          const cc=col-c;
+          if(m[row][cc]===null){
+            let dark=false;
+            if(wi<out.length) dark = ((out[wi]>>>bi)&1)===1;
+            if((row+cc)%2===0) dark=!dark;
+            m[row][cc]=dark;
+            if(--bi===-1){ wi++; bi=7; }
+          }
+        }
+        row+=inc;
+        if(row<0||row>=size){ row-=inc; inc=-inc; break; }
+      }
+    }
+    return {size, m};
+  }
+
+  function svg(text, px){
+    const q = encode(text);
+    if(!q) return '<p style="color:var(--urgent)">内容が長すぎてQRコードにできませんでした</p>';
+    const quiet=4, n=q.size+quiet*2;
+    let path="";
+    for(let r=0;r<q.size;r++) for(let c=0;c<q.size;c++)
+      if(q.m[r][c]) path += `M${c+quiet} ${r+quiet}h1v1h-1z`;
+    return `<svg class="qr" viewBox="0 0 ${n} ${n}" width="${px||220}" height="${px||220}" shape-rendering="crispEdges" role="img" aria-label="受付票のQRコード">
+      <rect width="${n}" height="${n}" fill="#fff"/><path d="${path}" fill="#000"/></svg>`;
+  }
+  return {svg, encode};
+})();
+
+/* ============ mock data ============ */
+const SHELTERS = [
+  {n:"第三小学校 体育館",       pref:"東京都"},
+  {n:"本郷中学校 体育館",       pref:"東京都"},
+  {n:"小石川公民館",           pref:"東京都"},
+  {n:"南小学校 体育館",         pref:"埼玉県"},
+  {n:"東小学校 体育館",         pref:"千葉県"}
+];
+const REGIONS = {
+  "北海道・東北":["北海道","青森県","岩手県","宮城県","秋田県","山形県","福島県"],
+  "関東":["茨城県","栃木県","群馬県","埼玉県","千葉県","東京都","神奈川県"],
+  "中部":["新潟県","富山県","石川県","福井県","山梨県","長野県","岐阜県","静岡県","愛知県"],
+  "近畿":["三重県","滋賀県","京都府","大阪府","兵庫県","奈良県","和歌山県"],
+  "中国・四国":["鳥取県","島根県","岡山県","広島県","山口県","徳島県","香川県","愛媛県","高知県"],
+  "九州・沖縄":["福岡県","佐賀県","長崎県","熊本県","大分県","宮崎県","鹿児島県","沖縄県"]
+};
+const regionOf = pf => Object.keys(REGIONS).find(r=>REGIONS[r].includes(pf)) || "";
+const PREFS = ["北海道","青森県","岩手県","宮城県","秋田県","山形県","福島県","茨城県","栃木県","群馬県","埼玉県","千葉県","東京都","神奈川県","新潟県","富山県","石川県","福井県","山梨県","長野県","岐阜県","静岡県","愛知県","三重県","滋賀県","京都府","大阪府","兵庫県","奈良県","和歌山県","鳥取県","島根県","岡山県","広島県","山口県","徳島県","香川県","愛媛県","高知県","福岡県","佐賀県","長崎県","熊本県","大分県","宮崎県","鹿児島県","沖縄県"];
+const NEIGHBORS = {
+  "東京都":["埼玉県","千葉県","神奈川県","山梨県"],
+  "埼玉県":["東京都","千葉県","茨城県","栃木県","群馬県","長野県","山梨県"],
+  "千葉県":["東京都","埼玉県","茨城県"],
+  "神奈川県":["東京都","山梨県","静岡県"],
+  "北海道":["青森県"]
+};
+const DATA_DATE = {shelter:"2026-04-01", clinic:"2026-03-01"};
+const HOSPITALS = [
+  {n:"医療法人社団 みなみ内科クリニック", a:"東京都文京区本郷3-8", pref:"東京都"},
+  {n:"みなみ野循環器内科",             a:"東京都八王子市みなみ野2-1", pref:"東京都"},
+  {n:"中央病院",                      a:"東京都中央区築地4-14", pref:"東京都"},
+  {n:"なかむら内科・糖尿病クリニック",   a:"東京都北区王子1-6", pref:"東京都"},
+  {n:"きたの整形外科",                 a:"東京都北区赤羽2-5", pref:"東京都"},
+  {n:"本郷ファミリークリニック",        a:"東京都文京区小石川2-3", pref:"東京都"},
+  {n:"みなみ浦和内科クリニック",        a:"埼玉県さいたま市南区別所5-2", pref:"埼玉県"},
+  {n:"市川中央クリニック",             a:"千葉県市川市八幡3-4", pref:"千葉県"},
+  {n:"みなと循環器内科",               a:"神奈川県横浜市中区山下町1-1", pref:"神奈川県"},
+  {n:"さっぽろ豊平内科",               a:"北海道札幌市豊平区平岸3条8", pref:"北海道"}
+];
+const PLACES = [
+  {n:"道の駅 あぐりぱーく", a:"〇〇郡〇〇町字大通12"},
+  {n:"市民球場 第2駐車場", a:"〇〇市宮の森1条3丁目"},
+  {n:"イオンモール 立体駐車場", a:"〇〇市発寒6条12丁目"},
+  {n:"中央小学校 校庭", a:"〇〇市中央区南5条西7丁目"},
+  {n:"〇〇総合運動公園 P3", a:"〇〇市厚別区上野幌3条1丁目"}
+];
+const DOCTORS = [
+  {n:"佐藤 健一", s:"内科・糖尿病", w:"待機中"},
+  {n:"大西 由紀", s:"精神科", w:"待機中"},
+  {n:"川原 誠", s:"総合診療", w:"待機中"},
+  {n:"三村 令子", s:"内科・循環器", w:"あと約10分"}
+];
+
+/* ============ state ============ */
+const blank = () => ({
+  site:"", writer:"", sei:"", mei:"", seiKana:"", meiKana:"", birth:"", age:"", sex:"", addr:"", tel:"", reach:"", family:"",
+  route:"", stay:"", shelterRoom:"",
+  carWhere:"here", carPlace:null, carPin:null, carNo:"", carType:"", carMark:"", carState:"",
+  homeAddr:"", homeMark:"",
+  cond:[], medOn:"", medKind:[], medOther:"", techo:"", clinic:null,
+  allergy:"", allergyWhat:"", pregnant:"", care:"", techoDis:[], service:"",
+  branch:"", reporter:"", relation:"", reporterSei:"", reporterMei:"", notRefused:"",
+  redirectType:"", redirectReason:"", redirectAck:false, callDone:false, callResult:"", emCalled:"", emCalled_multi:[], urgentPick:"",
+  seekSei:"", seekMei:"", seekSeiKana:"", seekMeiKana:"", seekAge:"", seekSex:"", seekFeature:"", seekLast:"", seekRel:"",
+  finderSei:"", finderMei:"", finderTel:"", finderReach:"", publish:"",
+  consent:false, consentPick:"", sign:"", consentAt:"", urgency:"", assigned:null,
+  needs:[], lifeline:[], damage:"", shelterUse:[]
+});
+let rec = blank();
+let idx = 0;
+let flow = [];
+
+const EXCLUSIVE = {
+  cond:"当てはまらない・わからない",
+  techoDis:"無",
+  shelterUse:"利用していない"
+};
+
+function buildFlow(){
+  if(rec.route==="search") return ["s1","p1","p2","p3","p4"];
+  const f = ["s1"];
+  if(rec.route==="medical"){
+    f.push("s1c");
+    if(rec.redirectType && !rec.redirectAck){ f.push("m4x"); return f; }
+  }
+  f.push("s1b","s2","s3");
+  if(rec.route==="medical"){
+    f.push("m4");
+    if(rec.cond.includes("毎日飲んでいる薬がある")) f.push("m5");
+    f.push("m6","m7","m8","m9","m10");
+  } else if(rec.route==="admin"){
+    f.push("t4","t5","t6","t8","t9");
+  }
+  return f;
+}
+
+/* ============ helpers ============ */
+const el = (h)=>{const d=document.createElement("div");d.innerHTML=h.trim();return d.firstElementChild;};
+const esc = (s)=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+function optList(items, key, multi, cls){
+  return `<div class="opts">${items.map(o=>{
+    const label = typeof o==="string"?o:o.l;
+    const sub = typeof o==="string"?"":(o.s?`<span class="sub">${esc(o.s)}</span>`:"");
+    const tag = (typeof o!=="string"&&o.tag)?`<span class="tag">${esc(o.tag)}</span>`:"";
+    const extra = (typeof o!=="string"&&o.cls)?" "+o.cls:(cls?" "+cls:"");
+    const on = multi ? rec[key].includes(label) : rec[key]===label;
+    return `<button class="opt${extra}" data-multi="${multi?1:0}" data-key="${key}" data-val="${esc(label)}" aria-pressed="${on}">
+      <span class="mark">${on?"✓":""}</span><span class="lbl">${esc(label)}${sub}</span>${tag}</button>`;
+  }).join("")}</div>`;
+}
+
+function searchWidget(id, key, data, ph, allowRaw){
+  const picked = rec[key];
+  if(picked){
+    return `<div class="picked">
+      <div><div class="nm">${esc(picked.n)} ${picked.verified?'<span class="badge ok">照合済</span>':'<span class="badge self">本人申告</span>'}</div>
+      ${picked.a?`<div class="ad">${esc(picked.a)}</div>`:""}</div>
+      <button class="undo" data-undo="${key}">選び直す</button></div>`;
+  }
+  return `<div class="searchbox">
+    <input type="text" id="${id}" placeholder="${esc(ph)}" autocomplete="off" data-search="${key}">
+    <ul class="results" id="${id}-r" hidden></ul>
+  </div>`;
+}
+
+function wireSearch(id, key, data, allowRaw){
+  const inp = document.getElementById(id); if(!inp) return;
+  const box = document.getElementById(id+"-r");
+  const draw = ()=>{
+    const q = inp.value.trim();
+    if(!q){ box.hidden = true; return; }
+    const hits = data.filter(d=>d.n.includes(q)||(d.a||"").includes(q)).slice(0,5);
+    let html = hits.map(h=>`<li><button data-pick='${esc(JSON.stringify({n:h.n,a:h.a,verified:true}))}' data-key="${key}">
+      <span class="nm">${esc(h.n)}</span><span class="ad">${esc(h.a)}</span></button></li>`).join("");
+    if(allowRaw) html += `<li><button class="raw" data-pick='${esc(JSON.stringify({n:q,a:"",verified:false}))}' data-key="${key}">
+      <span class="nm">「${esc(q)}」のまま登録する</span><span class="ad">候補になければこちら</span></button></li>`;
+    box.innerHTML = html; box.hidden = !html;
+  };
+  inp.addEventListener("input", draw);
+}
+
+
+/* ============ オンライン診療の画面（モック） ============ */
+/* TODO: 実装では Zoom Video SDK / Amazon Chime SDK などをこの枠に埋め込む。
+   別アプリを起動させず、この画面の中で通話が始まるようにする。          */
+let callState = "connecting";   // connecting → live → ended
+let callSec = 0, callTimer = null, micOn = true, camOn = true, shareOn = false;
+let callCtx = null;   // {origin:"intake"|"queue", no, name, ..., doctor, result}
+
+function ctxFromRec(){
+  return {origin:"intake", no:slipNo(), name:[rec.sei,rec.mei].filter(Boolean).join(" "),
+    age:rec.age, site:rec.site, stay:rec.stay, cond:[...rec.cond], medOn:rec.medOn,
+    medKind:[...rec.medKind], medOther:rec.medOther, techo:rec.techo,
+    clinic:rec.clinic?rec.clinic.n:"", clinicVerified:rec.clinic?rec.clinic.verified:false,
+    allergy:rec.allergy==="有"?("有："+rec.allergyWhat):rec.allergy, care:rec.care,
+    proxy: isProxy()?`${rec.relation}／${[rec.reporterSei,rec.reporterMei].filter(Boolean).join(" ")}`:"",
+    doctor:rec.assigned, result:rec.callResult||""};
+}
+function ctxFromRecord(r, doctor){
+  return {origin:"queue", no:r.no, name:r.name, age:r.age, site:CONFIG.site, stay:r.stay,
+    cond:[...(r.cond||[])], medOn:r.medOn, medKind:[...(r.medKind||[])], medOther:r.medOther,
+    techo:r.techo, clinic:r.clinic, clinicVerified:r.clinicVerified,
+    allergy:r.allergy, care:r.care, proxy:r.proxy, doctor, result:""};
+}
+
+function stopCallTimer(){ if(callTimer){ clearInterval(callTimer); callTimer = null; } }
+function mmss(s){ const p=n=>String(n).padStart(2,"0"); return `${p(Math.floor(s/60))}:${p(s%60)}`; }
+
+function startCall(ctx){
+  callCtx = ctx || ctxFromRec();
+  callState = "connecting"; callSec = 0; micOn = true; camOn = true; shareOn = false;
+  setMode("video");
+  setTimeout(()=>{
+    if(callState!=="connecting") return;
+    callState = "live";
+    stopCallTimer();
+    callTimer = setInterval(()=>{ callSec++; const el=document.getElementById("callClock"); if(el) el.textContent = mmss(callSec); }, 1000);
+    renderVideo();
+  }, 1800);
+}
+
+function renderVideo(){
+  const box = document.getElementById("videoBody"); if(!box) return;
+  const cx = callCtx || (callCtx = ctxFromRec());
+  const dr = cx.doctor || {n:"—", s:""};
+  const nm = cx.name || "ご本人";
+
+  if(callState === "ended"){
+    box.innerHTML = `<div class="wrap" style="grid-template-columns:1fr;max-width:680px"><main>
+      <div class="stepno">オンライン診療</div>
+      <h1 class="q">通話が終わりました</h1>
+      <p class="hint">${esc(cx.no)}番 ${esc(nm)} さん。${esc(dr.n)} 医師と ${mmss(callSec)} お話ししました。</p>
+      <div class="fields">
+        <div class="f"><label>診察の結果${REQ}</label>
+          <div class="opts">
+          ${[
+            {l:"お薬が処方された", s:"「お薬のリクエスト」に載せて、締め切りまでに送ります"},
+            {l:"お薬は出なかった", s:"様子を見る／別の対応になりました"},
+            {l:"医療機関への搬送が必要", s:"医師の判断で119番へ連絡します"}
+          ].map(o=>{
+            const on = cx.result===o.l;
+            return `<button class="opt" data-cres="${esc(o.l)}" aria-pressed="${on}">
+              <span class="mark">${on?"✓":""}</span>
+              <span class="lbl">${esc(o.l)}<span class="sub">${esc(o.s)}</span></span></button>`;
+          }).join("")}
+          </div></div>
+      </div>
+      <p class="hint info">診察の内容と処方は、医師の側でPDFにして、ご本人とかかりつけの病院にお渡しします。このシステムには残りません。</p>
+      <div class="act" style="margin-top:20px"><button class="btn next" id="callBack" style="width:100%" ${cx.result?"":"disabled"}>${cx.origin==="queue"?"呼び出しの操作にもどる":"受付にもどる"}</button></div>
+    </main></div>`;
+    box.querySelectorAll("[data-cres]").forEach(b=> b.onclick = ()=>{
+      cx.result = cx.result===b.dataset.cres ? "" : b.dataset.cres;
+      renderVideo();
+    });
+    const cb = document.getElementById("callBack");
+    if(cb) cb.onclick = ()=>{
+      if(cx.origin==="intake"){
+        rec.callResult = cx.result; rec.callDone = true;
+        setMode("intake"); paint();
+      } else {
+        finishQueuedCall(cx);
+        setMode("call");
+      }
+    };
+    return;
+  }
+
+  const connecting = callState === "connecting";
+  box.innerHTML = `
+  <div class="vwrap">
+    <div class="vhead">
+      <span class="vdot ${connecting?"":"on"}"></span>
+      <span>${connecting?"医師につないでいます…":"通話中"}</span>
+      <span class="vclock" id="callClock">${mmss(callSec)}</span>
+    </div>
+
+    <div class="vstage">
+      <div class="vtile main">
+        ${connecting
+          ? `<div class="vspin"></div><div class="vmsg">${esc(dr.n)} 医師を呼び出しています</div>`
+          : `<div class="vav">${esc(dr.n.slice(0,1))}</div>
+             <div class="vname">${esc(dr.n)} 医師<span>${esc(dr.s)}</span></div>`}
+      </div>
+      <div class="vtile self ${camOn?"":"off"}">
+        ${camOn?`<div class="vav sm">${esc(nm.slice(0,1))}</div>`:`<div class="vmsg sm">カメラ オフ</div>`}
+        <div class="vlabel">${esc(nm)}</div>
+      </div>
+      ${shareOn?`<div class="vshare"><div class="vshareHd">お薬手帳・マイナンバーカードの見せ方</div>
+        <ul class="vshareBd">
+          <li>カメラのレンズから <b>15〜20cm</b> ほど離してください</li>
+          <li>手で持つとぶれます。<b>台に立てかける</b>か、机に置いて画面を向けてください</li>
+          <li>照明が反射するときは、少し傾けてください</li>
+          <li>医師が「もう一度」と言ったら、ゆっくり動かし直してください</li>
+        </ul>
+        <div class="vshareFt">画像は撮りません。この場で読み取っていただくだけです。</div></div>`:""}
+    </div>
+
+    <div class="vbar">
+      <button class="vbtn ${micOn?"":"off"}" data-vc="mic">${micOn?"🎤":"🔇"}<span>${micOn?"マイク":"ミュート"}</span></button>
+      <button class="vbtn ${camOn?"":"off"}" data-vc="cam">${camOn?"📷":"🚫"}<span>カメラ</span></button>
+      <button class="vbtn ${shareOn?"on":""}" data-vc="share">📖<span>見せ方の案内</span></button>
+      <button class="vbtn end" data-vc="end">📴<span>通話を終わる</span></button>
+    </div>
+
+    <details class="vdoc">
+      <summary>医師の画面に出ている内容（参考）</summary>
+      <div class="vdocbd">${doctorPanel(cx)}</div>
+    </details>
+    <p class="vnote">この枠に通話が埋め込まれます。別のアプリは開きません。<b>いまは見た目だけのモックです。</b></p>
+  </div>`;
+
+  box.querySelectorAll("[data-vc]").forEach(b=> b.onclick = ()=>{
+    const a = b.dataset.vc;
+    if(a==="mic") micOn=!micOn;
+    if(a==="cam") camOn=!camOn;
+    if(a==="share") shareOn=!shareOn;
+    if(a==="end"){
+      if(callState==="connecting"){ stopCallTimer(); callState="ended"; renderVideo(); return; }
+      ask("通話を終わりますか？","終わったあと、診察の結果を記録します。",
+        ()=>{ stopCallTimer(); callState="ended"; renderVideo(); }, "終わる","続ける");
+      return;
+    }
+    renderVideo();
+  });
+}
+
+function doctorPanel(cx){
+  const L=(k,v,f)=> (!v||(Array.isArray(v)&&!v.length))?"" :
+    `<div class="ln"><dt>${esc(k)}</dt><span class="dots"></span><dd>${esc(Array.isArray(v)?v.join("、"):v)}${f||""}</dd></div>`;
+  return `<dl>
+    ${L("受付番号", cx.no+"番")}
+    ${L("お名前", cx.name)}${L("年齢", cx.age && cx.age+"歳")}
+    ${L("避難所", cx.site)}${L("滞在", cx.stay)}
+    ${L("状況", cx.cond)}
+    ${L("服薬", cx.medOn, cx.medOn==="切れている・足りない"?'<span class="flag urg">切れている</span>':"")}
+    ${L("薬の種類", cx.medKind)}${L("その他の薬", cx.medOther)}
+    ${L("お薬手帳", cx.techo)}
+    ${L("かかりつけ", cx.clinic, cx.clinic ? (cx.clinicVerified?'<span class="flag med">照合済</span>':'<span class="flag urg">本人申告</span>') : "")}
+    ${L("アレルギー", cx.allergy)}
+    ${L("要介護", cx.care)}
+    ${L("代理受付", cx.proxy)}
+  </dl>`;
+}
+
+// 待ち行列から呼んだ方の通話が終わったときの後処理
+function finishQueuedCall(cx){
+  const q = QUEUE.find(x=>x.no===cx.no && x.status==="now");
+  if(q) q.status = "done";
+  const r = RECORDS.find(x=>x.no===cx.no);
+  if(r){ r.doctor = cx.doctor ? cx.doctor.n : ""; r.callResult = cx.result; }
+  if(cx.result==="お薬が処方された" && !RXLIST.some(x=>x.no===cx.no)){
+    RXLIST.push({no:cx.no, name:cx.name, kinds:[...(cx.medKind||[])], other:cx.medOther||"",
+      techo:cx.techo||"", clinic:cx.clinic||"", doctor:cx.doctor?cx.doctor.n:"",
+      status:"pending", at:nowStamp(), sentAt:"",
+      pickup:defaultPickup(cx.no), eta:""});
+  }
+  if(cx.result==="医療機関への搬送が必要"){
+    notify(`${cx.no}番 の方は搬送が必要です`, "医師の判断で119番へ連絡します。搬送の準備をしてください。");
+  }
+  renderBoard(); renderRx(); updateAlert();
+}
+
+/* ============ 全体の状況（サーバー連携・モック） ============ */
+/* TODO: ここはすべて仮の値。実装ではサーバーから取得する。
+   - 受付はオフラインでも動き、回線があるときだけ同期する
+   - 医師とのマッチングは通信必須（オフラインでは予約のみ受け付ける）        */
+const SERVER = {
+  online: true,
+  lastSync: "",
+  others: [   // TODO: サーバーから取得
+    {name:"第三小学校 体育館",   waiting:6, headWait:52},
+    {name:"本郷中学校 体育館",   waiting:9, headWait:74},
+    {name:"南小学校 体育館（埼玉）", waiting:4, headWait:23},
+    {name:"東小学校 体育館（千葉）", waiting:11, headWait:96},
+    {name:"（ほか8か所）",        waiting:23, headWait:38}
+  ],
+  doctors: {available:5, busy:3, total:14, avgMin:15}   // TODO: 医師の待機登録と連動
+};
+
+function myHeadWaitMin(){
+  const w = waiting(); if(!w.length) return 0;
+  const t = new Date(w[0].at.replace(" ","T"));
+  return Math.max(0, Math.round((Date.now()-t)/60000));
+}
+function netTotals(){
+  const mine = waiting().length;
+  const total = mine + SERVER.others.reduce((a,b)=>a+b.waiting,0);
+  const rank = 1 + SERVER.others.filter(o=>o.headWait > myHeadWaitMin()).length;
+  const d = SERVER.doctors;
+  const eta = d.available ? Math.round(total / d.available * d.avgMin) : null;
+  const myEta = d.available ? Math.round(rank / d.available * d.avgMin) : null;
+  return {mine, total, rank, shelters: SERVER.others.length + 1, d, eta, myEta};
+}
+function syncNow(){ SERVER.lastSync = nowStamp(); }
+
+function renderNet(){
+  const box = document.getElementById("netBody"); if(!box) return;
+  const t = netTotals();
+  box.innerHTML = `
+  <div class="cnow ${SERVER.online?"on":""}">
+    <div class="lbl">${SERVER.online?"サーバーにつながっています":"オフライン（受付だけできます）"}</div>
+    <div class="num">${t.total}<span style="font-size:20px"> 人</span></div>
+    <div class="note" style="margin-top:6px">${t.shelters}か所の避難所で、いまお待ちの人数</div>
+    <div class="act"><button class="btn go" id="netSync" style="width:100%">いま同期する</button></div>
+    <p class="note" style="margin-top:8px">最終同期：${esc(SERVER.lastSync||"—")}</p>
+  </div>
+
+  <div class="csec">
+    <h2>オンライン診療の窓口</h2>
+    <div class="netgrid">
+      <div><span class="k">いま対応できる医師</span><b>${t.d.available}</b><span class="u">人</span></div>
+      <div><span class="k">対応中</span><b>${t.d.busy}</b><span class="u">人</span></div>
+      <div><span class="k">登録している医師</span><b>${t.d.total}</b><span class="u">人</span></div>
+      <div><span class="k">1件あたりの目安</span><b>${t.d.avgMin}</b><span class="u">分</span></div>
+    </div>
+    <p class="note" style="margin-top:10px">${t.eta!==null
+      ? `いまの人数だと、最後の方まで約 ${Math.floor(t.eta/60)?Math.floor(t.eta/60)+"時間":""}${t.eta%60}分かかる見込みです。`
+      : "対応できる医師がいません。"}</p>
+  </div>
+
+  <div class="csec">
+    <h2>この避難所の位置づけ</h2>
+    <div class="netgrid">
+      <div><span class="k">この避難所の待ち</span><b>${t.mine}</b><span class="u">人</span></div>
+      <div><span class="k">先頭の方の待ち時間</span><b>${myHeadWaitMin()}</b><span class="u">分</span></div>
+      <div><span class="k">全体での順番</span><b>${t.rank}</b><span class="u">番目</span></div>
+      <div><span class="k">つながる目安</span><b>${t.myEta ?? "—"}</b><span class="u">分後</span></div>
+    </div>
+    <p class="note" style="margin-top:10px">避難所ごとの先頭の方を、待ち時間の長い順に並べています。早く押した避難所が先になる仕組みではありません。</p>
+  </div>
+
+  <div class="csec">
+    <h2>ほかの避難所</h2>
+    <ol class="clist">
+      <li><span class="num">${esc(CONFIG.site)}</span><span class="uflag">この避難所</span>
+        <span class="tm">${t.mine}人・先頭 ${myHeadWaitMin()}分待ち</span></li>
+      ${SERVER.others.map(o=>`<li><span>${esc(o.name)}</span>
+        <span class="tm">${o.waiting}人・先頭 ${o.headWait}分待ち</span></li>`).join("")}
+    </ol>
+  </div>
+
+  <div class="csec todo">
+    <h2>まだ作っていないこと（サーバー側）</h2>
+    <ul class="todolist">
+      <li>全避難所の待ち行列を集約し、医師が空いたら自動で次の方へ割り当てる</li>
+      <li>医師の待機登録（対応できる時間・範囲の申告、離脱のワンタップ）</li>
+      <li>二重割り当ての防止と、応答がないときの次の医師への転送</li>
+      <li>同じ避難所の複数端末どうしの同期（いまは端末ごとに持っています）</li>
+      <li>オフラインで受け付けた分を、回線が戻ったときに送る仕組み</li>
+      <li>避難所IDを含む一意な記録IDでのCSV出力・自治体システムとの連携</li>
+      <li>在所非開示の方を、集約したデータでどう扱うか</li>
+      <li>端末の登録と認証。避難所の端末は自治体が平時に登録しておき、発災時はログインなしで使える形を想定しています</li>
+      <li>医師側の本人確認。なりすましを防ぐため、医籍番号の確認や医師会経由の招待制など、避難所側とは別の仕組みが要ります</li>
+      <li>配布のしくみ。いまは1つのファイルです。次はPWAとして公開し、ホーム画面に追加すればオフラインでも起動する形にします</li>
+    </ul>
+  </div>`;
+
+  document.getElementById("netSync").onclick = ()=>{
+    syncNow();
+    // TODO: 実装では差分を送受信する。ここでは他避難所の数を少し動かすだけ
+    SERVER.others.forEach(o=>{ o.waiting = Math.max(0, o.waiting + (Math.random()<.5?-1:1)); o.headWait = Math.max(5, o.headWait + Math.round((Math.random()-.5)*20)); });
+    SERVER.doctors.available = Math.max(1, Math.min(SERVER.doctors.total, SERVER.doctors.available + (Math.random()<.5?-1:1)));
+    renderNet(); renderBoard(); if(!document.getElementById("modeHome").hidden) renderHome();
+  };
+}
+
+/* ============ 受付の記録（スタッフ用・既定では中身を出さない） ============ */
+let RECORDS = [];
+let recOpen = null, recDay = "", recDaysOpen = false;
+const DAY_SHOW = 4;   // 既定で見せる日数
+
+function snapshotRecord(no){
+  RECORDS.unshift({
+    no, at:nowStamp(), route:rec.route, branch:rec.branch,
+    name:[rec.sei,rec.mei].filter(Boolean).join(" "),
+    kana:[rec.seiKana,rec.meiKana].filter(Boolean).join(" "),
+    age:rec.age, disclose:rec.disclose, writer:rec.writer,
+    proxy: isProxy() ? `${rec.relation}／${[rec.reporterSei,rec.reporterMei].filter(Boolean).join(" ")}` : "",
+    stay:rec.stay, carNo:rec.carNo,
+    cond:[...rec.cond], medOn:rec.medOn, medKind:[...rec.medKind], medOther:rec.medOther,
+    techo:rec.techo, clinic:rec.clinic?rec.clinic.n:"", clinicVerified:rec.clinic?rec.clinic.verified:false,
+    allergy:rec.allergy==="有"?("有："+rec.allergyWhat):rec.allergy, care:rec.care,
+    urgency:rec.urgency, doctor:rec.assigned?rec.assigned.n:"",
+    redirect:rec.redirectReason,
+    needs:[...rec.needs], damage:rec.damage,
+    seek:[rec.seekSei,rec.seekMei].filter(Boolean).join(" ")
+  });
+}
+
+const ROUTE_LABEL = {medical:"医療", admin:"生活", search:"さがす"};
+
+function renderRecords(){
+  const box = document.getElementById("recBody"); if(!box) return;
+  const kw = (document.getElementById("recQ")?.value || "").trim();
+  const days = [...new Set(RECORDS.map(r=>r.at.slice(0,10)))].sort().reverse();
+  if((!recDay || !days.includes(recDay)) && days.length) recDay = days[0];
+  const hit = kw
+    ? RECORDS.filter(r=> r.no===kw.replace("番","") || r.name.includes(kw) || r.kana.includes(kw))
+    : RECORDS.filter(r=> r.at.slice(0,10)===recDay);
+  const todayStr = nowStamp().slice(0,10);
+  const dayLabel = dd => {
+    const diff = Math.round((new Date(todayStr)-new Date(dd))/86400000);
+    const md = dd.slice(5).replace("-","/");
+    return diff===0 ? `今日 ${md}` : diff===1 ? `昨日 ${md}` : md;
+  };
+
+  box.innerHTML = `
+  <div class="f"><label for="recQ">番号かお名前でさがす</label>
+    <input type="text" id="recQ" value="${esc(kw)}" placeholder="12 または 山田" autocomplete="off">
+    <span class="note">番号を忘れた方は、お名前で引けます。お渡しする前に、生年月日か電話番号でご本人か確かめてください。</span></div>
+
+  ${kw?"":(()=>{
+    const shown = recDaysOpen ? days : days.slice(0, DAY_SHOW);
+    const hidden = days.length - shown.length;
+    const sel = !shown.includes(recDay) && recDay ? [recDay] : [];
+    const list = [...shown, ...sel];
+    const older = RECORDS.filter(r=>!shown.includes(r.at.slice(0,10)) && r.at.slice(0,10)!==recDay).length;
+    return `<div class="daysel">${list.map(dd=>{
+      const n = RECORDS.filter(r=>r.at.slice(0,10)===dd).length;
+      return `<button class="chip" data-recday="${esc(dd)}" aria-pressed="${recDay===dd}">${esc(dayLabel(dd))}<span class="cnum">${n}</span></button>`;
+    }).join("")}
+    ${hidden>0 && !recDaysOpen
+      ? `<button class="chip more" id="dayMore">前の${hidden}日を出す<span class="cnum">${older}</span></button>`
+      : (days.length>DAY_SHOW ? `<button class="chip more" id="dayLess">古い日をしまう</button>` : "")}
+    </div>`;
+  })()}
+
+  <p class="note" style="margin:14px 0 8px">${kw
+    ? `「${esc(kw)}」に一致 ${hit.length}件（日付をまたいで探しています）`
+    : `${esc(dayLabel(recDay||todayStr))}の受付 ${hit.length}件（全${RECORDS.length}件）`}</p>
+
+  ${hit.length ? hit.map(r=>{
+    const open = recOpen===r.no;
+    return `<div class="rcard">
+      <div class="rhd">
+        <span class="num">${esc(r.no)}番</span>
+        <span class="rname">${esc(r.name || r.seek || "—")}</span>
+        <span class="rtag ${r.route}">${esc(ROUTE_LABEL[r.route]||"")}</span>
+        ${r.disclose==="伝えないでほしい"?'<span class="rflag">在所非開示</span>':""}
+        <span class="tm">${esc(r.at.slice(5))}</span>
+        <button class="mini" data-recopen="${esc(r.no)}">${open?"とじる":"内容を見る"}</button>
+      </div>
+      ${open?`<div class="rbd">${recordDetail(r)}</div>`:""}
+    </div>`;
+  }).join("") : `<p class="pnone">${kw?"見つかりませんでした。":"まだ受付がありません。"}</p>`}
+
+  <p class="hint info">この一覧は受付の端末だけで見られます。内容は「内容を見る」を押したときだけ表示されます。支援のためだけに使い、ほかの方には伝えないでください。</p>`;
+
+  const q = document.getElementById("recQ");
+  q.oninput = ()=>{ const v=q.value, p=q.selectionStart; renderRecords();
+    const q2=document.getElementById("recQ"); q2.value=v; q2.focus(); q2.setSelectionRange(p,p); };
+  const dm=document.getElementById("dayMore"); if(dm) dm.onclick=()=>{ recDaysOpen=true; renderRecords(); };
+  const dl=document.getElementById("dayLess"); if(dl) dl.onclick=()=>{ recDaysOpen=false; renderRecords(); };
+  box.querySelectorAll("[data-recday]").forEach(b=> b.onclick = ()=>{ recDay=b.dataset.recday; recOpen=null; renderRecords(); });
+  box.querySelectorAll("[data-recopen]").forEach(b=> b.onclick = ()=>{
+    recOpen = recOpen===b.dataset.recopen ? null : b.dataset.recopen; renderRecords();
+  });
+}
+
+function recordDetail(r){
+  const L=(k,v,flag)=> (!v||(Array.isArray(v)&&!v.length)) ? "" :
+    `<div class="ln"><dt>${esc(k)}</dt><span class="dots"></span><dd>${esc(Array.isArray(v)?v.join("、"):v)}${flag||""}</dd></div>`;
+  let h = L("記録ID", `${CONFIG.site}-${r.no}`)+L("受付",r.at)+L("聞き取り",r.writer)+L("ふりがな",r.kana)+L("年齢",r.age&&r.age+"歳")
+        + L("代理受付",r.proxy)+L("滞在",r.stay)+L("車のナンバー",r.carNo)
+        + L("在所の開示",r.disclose, r.disclose==="伝えないでほしい"?'<span class="flag urg">非開示</span>':"");
+  if(r.route==="medical"){
+    h += L("状況",r.cond)+L("服薬",r.medOn)+L("薬の種類",r.medKind)+L("その他の薬",r.medOther)
+       + L("お薬手帳",r.techo)
+       + L("かかりつけ",r.clinic, r.clinicVerified?'<span class="flag med">照合済</span>':'<span class="flag urg">本人申告</span>')
+       + L("アレルギー",r.allergy)+L("要介護",r.care)+L("緊急対応",r.redirect)
+       + L("緊急度",r.urgency)+L("担当医",r.doctor);
+  }
+  if(r.route==="admin") h += L("困りごと",r.needs)+L("家屋の被害",r.damage);
+  if(r.route==="search") h += L("さがす方",r.seek);
+  return `<dl>${h}</dl>`;
+}
+
+/* ============ お薬のリクエスト ============ */
+let RXLIST = [];   // {no, name, kinds, other, techo, clinic, doctor, status, at, sentAt}
+
+function minsNow(){ const d=new Date(); return d.getHours()*60+d.getMinutes(); }
+function nextCutoff(){
+  const now = minsNow();
+  const list = [...CONFIG.cutoffs].sort();
+  for(const t of list){
+    const [h,m]=t.split(":").map(Number);
+    if(h*60+m > now) return {t, mins:(h*60+m)-now, today:true};
+  }
+  if(!list.length) return null;
+  const [h,m]=list[0].split(":").map(Number);
+  return {t:list[0], mins:(24*60-now)+(h*60+m), today:false};
+}
+function cutoffText(){
+  const c = nextCutoff();
+  if(!c) return "締め切り未設定";
+  const hh = Math.floor(c.mins/60), mm = c.mins%60;
+  return `次の締め切り ${c.t}${c.today?"":"（明日）"}・あと${hh?hh+"時間":""}${mm}分`;
+}
+
+let RX_ETA = "";
+function defaultPickup(no){
+  const reg = REGISTRY.find(x=>x.no===no);
+  return (reg && (reg.stay==="車中泊" || reg.stay==="自宅" || reg.stay==="知人宅")) ? "巡回で届ける" : "本人が取りに来る";
+}
+
+function addRx(){
+  const no = slipNo();
+  if(RXLIST.some(r=>r.no===no)) return;
+  RXLIST.push({
+    no, name:[rec.sei,rec.mei].filter(Boolean).join(" "),
+    kinds:[...rec.medKind], other:rec.medOther, techo:rec.techo,
+    clinic:rec.clinic?rec.clinic.n:"", doctor:rec.assigned?rec.assigned.n:"",
+    status:"pending", at:nowStamp(), sentAt:"",
+    pickup: rec.stay==="避難所" ? "本人が取りに来る" : "巡回で届ける", eta:""
+  });
+}
+
+function renderRx(){
+  const box = document.getElementById("rxBody"); if(!box) return;
+  const pend = RXLIST.filter(r=>r.status==="pending");
+  const sent = RXLIST.filter(r=>r.status==="sent");
+  const arr  = RXLIST.filter(r=>r.status==="arrived");
+  const done = RXLIST.filter(r=>r.status==="handed");
+  if(!document.getElementById("modeHome").hidden) renderHome();
+
+  box.innerHTML = `
+  <div class="cnow ${pend.length?"on":""}">
+    <div class="lbl">${esc(CONFIG.pharmacy)}へ</div>
+    <div class="num">${pend.length}<span style="font-size:20px"> 件</span></div>
+    <div class="note" style="margin-top:6px">${esc(cutoffText())}</div>
+    ${pend.length?`<div class="etarow">
+      <label for="rxEta">お薬が届く目安</label>
+      <input type="time" id="rxEta" value="${esc(RX_ETA)}">
+    </div>
+    <div class="act"><button class="btn go" id="rxSend" style="width:100%">この${pend.length}件をまとめて送る</button></div>
+    <p class="note" style="margin-top:8px">目安の時刻は、取りに来ていただく方にお伝えします。</p>`:""}
+  </div>
+
+  <div class="csec">
+    <h2>送る前の一覧（${pend.length}件）</h2>
+    ${pend.length?`<ol class="clist">${pend.map(r=>`<li style="align-items:flex-start">
+      <span class="num">${esc(r.no)}番</span>
+      <span style="flex:1;min-width:180px">
+        <b>${esc(r.name)}</b><br>
+        <span class="rxk">${esc(r.kinds.join("、")||"種類の記載なし")}${r.other?"／"+esc(r.other):""}</span><br>
+        <span class="rxs">${r.doctor?"オンライン診療："+esc(r.doctor)+" 医師":"診察前（お薬手帳での確認）"}${r.clinic?"／かかりつけ："+esc(r.clinic):""}${r.techo==="持っている"?"／手帳あり":""}</span>
+      </span>
+      <span class="pick">
+        ${["本人が取りに来る","巡回で届ける"].map(x=>
+          `<button class="pbtn" data-rxpick="${esc(r.no)}|${esc(x)}" aria-pressed="${r.pickup===x}">${esc(x)}</button>`).join("")}
+      </span>
+      <button class="mini" data-rxdel="${esc(r.no)}">外す</button>
+    </li>`).join("")}</ol>`:`<p class="note">いま送るものはありません。受付でお薬の相談を受けると、ここに並びます。</p>`}
+  </div>
+
+  <div class="csec">
+    <h2>送信済み・届くのを待っている（${sent.length}件）</h2>
+    ${sent.length?`<ol class="clist">${sent.map(r=>`<li>
+      <span class="num">${esc(r.no)}番</span><span>${esc(r.name)}</span>
+      <span class="rxs">${esc(r.pickup)}${r.eta?`／目安 ${esc(r.eta)}`:""}</span>
+      <button class="mini" data-rxarr="${esc(r.no)}">届いた</button>
+    </li>`).join("")}</ol>`:`<p class="note">まだありません。</p>`}
+  </div>
+
+  <div class="csec ${arr.length?"warnsec":""}">
+    <h2>避難所に届いた・まだお渡しできていない（${arr.length}件）</h2>
+    ${arr.length?`<ol class="clist">${arr.map(r=>`<li>
+      <span class="num">${esc(r.no)}番</span>
+      <span style="flex:1;min-width:170px"><b>${esc(r.name)}</b><br>
+        <span class="rxs">${r.pickup==="本人が取りに来る"
+          ? `受付でお渡し${r.eta?`／${esc(r.eta)}ごろとお伝えずみ`:""}`
+          : esc(r.away||"巡回で届ける")}</span></span>
+      <button class="mini" data-rxhand="${esc(r.no)}">お渡しした</button>
+    </li>`).join("")}</ol>
+    <p class="note" style="margin-top:10px">取りに来られない方は、巡回のときに持って行ってください。目安の時刻を過ぎても来られない方は、様子を見に行ってください。</p>`
+    :`<p class="note">なし</p>`}
+  </div>
+
+  <div class="csec">
+    <h2>お渡しずみ（${done.length}件）</h2>
+    ${done.length?`<ol class="clist">${done.map(r=>`<li>
+      <span class="num">${esc(r.no)}番</span><span>${esc(r.name)}</span>
+      <span class="tm">${esc(r.handedAt)} お渡し</span>
+    </li>`).join("")}</ol>`:`<p class="note">まだありません。</p>`}
+  </div>
+
+  <p class="hint info">処方箋がなくても、お薬手帳や薬の包装で内容が確認できれば、薬剤師がお薬を用意できる取り扱いがあります（災害時の特例）。オンライン診療を受けた方は、医師名を添えて送ってください。</p>`;
+
+  const sb = document.getElementById("rxSend");
+  if(sb) sb.onclick = ()=> ask(`${pend.length}件をまとめて送りますか？`,
+    `${CONFIG.pharmacy}へ送ります。送ったあとに受け付けた分は、次の締め切りに回ります。`,
+    ()=>{ const t=nowStamp(); const eta=document.getElementById("rxEta")?.value||"";
+          RX_ETA = eta;
+          pend.forEach(r=>{ r.status="sent"; r.sentAt=t; r.eta=eta; });
+          const come = pend.filter(r=>r.pickup==="本人が取りに来る").length;
+          notify("送信しました",
+            `${pend.length}件を${CONFIG.pharmacy}へ送りました。`
+            + (eta?`\n\n届く目安は ${eta} ごろです。`:"")
+            + (come?`\n取りに来ていただく方が ${come}名います。番号と目安の時刻をお伝えしてください。`:""));
+          renderRx(); },
+    "送る","やめる");
+  box.querySelectorAll("[data-rxpick]").forEach(b=> b.onclick = ()=>{
+    const [no,pk] = b.dataset.rxpick.split("|");
+    const r = RXLIST.find(x=>x.no===no); if(r){ r.pickup = pk; renderRx(); }
+  });
+  box.querySelectorAll("[data-rxarr]").forEach(b=> b.onclick = ()=>{
+    const r = RXLIST.find(x=>x.no===b.dataset.rxarr);
+    r.status="arrived";
+    const reg = REGISTRY.find(x=>x.no===r.no);
+    r.away = reg ? `${reg.stay}（${reg.where}）— 巡回で届けてください` : "巡回で届ける";
+    renderRx();
+  });
+  box.querySelectorAll("[data-rxhand]").forEach(b=> b.onclick = ()=>{
+    const r = RXLIST.find(x=>x.no===b.dataset.rxhand);
+    r.status="handed"; r.handedAt=nowStamp(); renderRx();
+  });
+  box.querySelectorAll("[data-rxdel]").forEach(b=> b.onclick = ()=>{
+    const i = RXLIST.findIndex(r=>r.no===b.dataset.rxdel && r.status==="pending");
+    if(i>=0){ RXLIST.splice(i,1); renderRx(); }
+  });
+}
+
+/* ============ 端末の設定 ============ */
+const CONFIG = { site:"", pref:"", writer:"", prefs:[], cutoffs:["09:00","15:00"], pharmacy:"配送便",
+                 termCount:1, termIndex:1, role:"reception", booths:1 };
+
+/* 端末の役割。TODO: サーバー実装後は、同じ避難所の端末どうしで待ち行列を共有し、
+   役割に応じた通知をそれぞれの端末へ送る。いまは端末内だけで完結している。 */
+const ROLES = {
+  reception: {label:"受付する",   icon:"✏️", desc:"受付・記録・お薬・巡回。診察は別の端末にまかせます",
+              cards:["intake","rec","rx","patrol","call","net","config","help","board","seek"]},
+  consult:   {label:"診察する",   icon:"💻", desc:"オンライン診療の通話だけ。ノートパソコンなど、落ち着いて話せる端末に",
+              cards:["call","net","rec","config","help","board"]},
+  display:   {label:"掲示する",   icon:"📋", desc:"待ち状況を映しっぱなしにします。操作はしません",
+              cards:["board","seek","config"]},
+  patrol:    {label:"巡回する",   icon:"🚗", desc:"車中泊・在宅の方をまわるとき。スタッフのスマートフォンに",
+              cards:["patrol","rx","rec","config","help","seek"]}
+};
+const roleIs = r => CONFIG.role===r;
+function applyRole(){
+  const allow = ROLES[CONFIG.role].cards;
+  document.querySelectorAll("[data-go]").forEach(b=>{
+    b.hidden = !allow.includes(b.dataset.go);
+  });
+  // カードが1枚もない側のタブは隠す
+  const has = id => [...document.querySelectorAll(`#${id} [data-go]`)].some(b=>!b.hidden);
+  const g = has("hGuest"), st = has("hStaff");
+  const tabs = document.querySelector(".htabs");
+  document.querySelector('[data-htab="guest"]').hidden = !g;
+  document.querySelector('[data-htab="staff"]').hidden = !st;
+  if(tabs) tabs.hidden = !(g && st);
+  let t = homeTab;
+  if(!g) t = "staff";
+  else if(!st) t = "guest";
+  else if(roleIs("display")) t = "guest";
+  setHomeTab(t);
+}
+const cfgReady = ()=> !!CONFIG.site && !!CONFIG.writer.trim();
+
+function renderConfig(){
+  const box = document.getElementById("cfgBody"); if(!box) return;
+
+  // 1. 県が未選択なら、まず県を選ばせる
+  if(!CONFIG.pref){
+    box.innerHTML = `<div class="fields">
+      <div class="f"><label>この端末を使う都道府県${REQ}</label>
+        <p class="hint info">まず県を選ぶと、そのあと避難所の一覧が短くなります。</p></div>
+    </div>
+    ${Object.keys(REGIONS).map(rg=>`<div class="sec"><h2>${esc(rg)}</h2>
+      <div class="chips">${REGIONS[rg].map(pf=>{
+        const n = SHELTERS.filter(x=>x.pref===pf).length;
+        return `<button class="chip" data-setpref="${esc(pf)}" ${n?"":'style="opacity:.45"'}>${esc(pf)}${n?`<span class="cnum">${n}</span>`:""}</button>`;
+      }).join("")}</div></div>`).join("")}`;
+    box.querySelectorAll("[data-setpref]").forEach(b=> b.onclick = ()=>{
+      const pf = b.dataset.setpref;
+      CONFIG.pref = pf;
+      [pf, ...(NEIGHBORS[pf]||[])].forEach(x=>{ if(!CONFIG.prefs.includes(x)) CONFIG.prefs.push(x); });
+      renderConfig();
+    });
+    return;
+  }
+
+  // 2. 県が決まったら、その県の避難所と担当者、検索地域
+  const inPref = SHELTERS.filter(x=>x.pref===CONFIG.pref);
+  const isListed = inPref.some(x=>x.n===CONFIG.site);
+  const clinicCount = HOSPITALS.filter(h=>CONFIG.prefs.includes(h.pref)).length;
+
+  box.innerHTML = `<div class="fields">
+    <div class="f"><label>都道府県${REQ}</label>
+      <div class="picked"><div><div class="nm">${esc(CONFIG.pref)}</div>
+        <div class="ad">${esc(regionOf(CONFIG.pref))}／避難所 ${inPref.length}件</div></div>
+        <button class="undo" id="cfgPrefBack">選び直す</button></div></div>
+
+    <div class="f"><label for="cfgSite">この端末を置く避難所${REQ}</label>
+      <select id="cfgSite"><option value="">選んでください</option>
+      ${inPref.map(sh=>`<option value="${esc(sh.n)}" ${CONFIG.site===sh.n?"selected":""}>${esc(sh.n)}</option>`).join("")}</select>
+      <span class="note">一覧にない場所が避難所になることもあります。その場合は下の欄に直接入力してください。</span></div>
+
+    <div class="f"><label for="cfgSiteFree">一覧にない避難所${ANY}</label>
+      <input type="text" id="cfgSiteFree" placeholder="例）〇〇工場 第2倉庫" value="${esc(isListed?"":CONFIG.site)}"></div>
+
+    <div class="f"><label for="cfgWriter">聞き取りをする人${REQ}</label>
+      <input type="text" id="cfgWriter" value="${esc(CONFIG.writer)}" placeholder="受付担当の氏名">
+      <span class="note">交代したら書き換えてください。受付のたびに聞くことはありません。</span></div>
+
+    <div class="sec"><h2>かかりつけ病院を探す地域${REQ}</h2>
+      <p class="hint info">選んだ都道府県の医療機関だけを検索します。県を選ぶと、その県と隣の県が自動で入ります。<br>
+        遠くから避難してきた方が来たら、ここで足してください。</p>
+      <div class="prefsel">
+        ${Object.keys(REGIONS).map(rg=>{
+          const on = REGIONS[rg].filter(pf=>CONFIG.prefs.includes(pf)).length;
+          return `<details class="rgroup" ${on?"open":""}>
+            <summary>${esc(rg)}<span class="cnt">${on}/${REGIONS[rg].length}</span>
+              <span class="rgall" data-rgall="${esc(rg)}">${on===REGIONS[rg].length?"すべて外す":"すべて選ぶ"}</span></summary>
+            <div class="chips">${REGIONS[rg].map(pf=>
+              `<button class="chip" data-cfgpref="${esc(pf)}" aria-pressed="${CONFIG.prefs.includes(pf)}">${esc(pf)}</button>`).join("")}</div>
+          </details>`;
+        }).join("")}
+      </div>
+      <p class="note" style="margin-top:10px">${CONFIG.prefs.length}県を選択中（同梱の医療機関 ${clinicCount}件）</p>
+    </div>
+
+    <div class="sec"><h2>この端末の役割${REQ}</h2>
+      <p class="hint info">役割によって、ホームに出るものと、通知の出方が変わります。<br>
+        受付はタブレット、診察はノートパソコン、掲示はモニター、というように分けて使えます。</p>
+      <div class="opts" style="margin-top:12px">
+        ${Object.keys(ROLES).map(k=>{
+          const r=ROLES[k], on=CONFIG.role===k;
+          return `<button class="opt" data-role="${k}" aria-pressed="${on}">
+            <span class="mark">${on?"✓":""}</span>
+            <span class="lbl">${r.icon} ${esc(r.label)}<span class="sub">${esc(r.desc)}</span></span></button>`;
+        }).join("")}
+      </div>
+    </div>
+
+    <div class="sec"><h2>受付の端末${REQ}</h2>
+      <p class="hint info">同じ避難所で受付を複数持つときに設定します。番号が重ならないよう、台数ごとに飛ばして採番します。<br>
+        例）2台なら、1台目は 1・3・5…、2台目は 2・4・6…</p>
+      <div class="row" style="margin-top:12px">
+        <div class="f"><label for="cfgTc">この避難所の受付の台数</label>
+          <select id="cfgTc">${[1,2,3,4,5].map(n=>`<option value="${n}" ${CONFIG.termCount===n?"selected":""}>${n}台</option>`).join("")}</select></div>
+        <div class="f"><label for="cfgBo">診察の席数</label>
+          <select id="cfgBo">${[1,2,3,4].map(n=>`<option value="${n}" ${CONFIG.booths===n?"selected":""}>${n}席</option>`).join("")}</select></div>
+        <div class="f"><label for="cfgTi">この端末は何台目</label>
+          <select id="cfgTi">${Array.from({length:CONFIG.termCount},(_,k)=>k+1).map(n=>`<option value="${n}" ${CONFIG.termIndex===n?"selected":""}>${n}台目</option>`).join("")}</select></div>
+      </div>
+      <p class="note">次に発行する番号：<b>${NEXT_NO}番</b>　／　同時に診察できる人数：<b>${CONFIG.booths}人</b></p>
+    </div>
+
+    <div class="sec"><h2>お薬のリクエスト締め切り${REQ}</h2>
+      <p class="hint info">この避難所から医薬品をお願いできる時刻です。締め切りが近い方を、先に医師へおつなぎします。</p>
+      <div class="f" style="margin-top:12px"><label>受け取りの方法</label>
+        <div class="chips">
+          ${["配送便","モバイルファーマシー","医療救護所へ取りに行く"].map(x=>
+            `<button class="chip" data-pharm="${esc(x)}" aria-pressed="${CONFIG.pharmacy===x}">${esc(x)}</button>`).join("")}
+        </div></div>
+      <div class="f" style="margin-top:12px"><label>締め切りの時刻（1日に何回でも）</label>
+        <div class="cutlist" id="cutList">
+          ${CONFIG.cutoffs.map((t,i)=>`<div class="cutrow">
+            <input type="time" value="${esc(t)}" data-cut="${i}">
+            <button class="mini" data-cutdel="${i}">消す</button></div>`).join("")}
+        </div>
+        <button class="chip" id="cutAdd" style="margin-top:10px">締め切りを追加する</button>
+        <span class="note">道路の状況で変わります。変わったらここを直してください。</span></div>
+    </div>
+
+    <div class="sec"><h2>同梱しているデータ</h2>
+      <div class="stamp">避難所の一覧：${DATA_DATE.shelter} 時点（国土地理院 指定避難所データ）<br>
+        医療機関の一覧：${DATA_DATE.clinic} 時点（医療情報ネット）<br>
+        いずれも端末に入っているので、通信がなくても使えます。</div>
+    </div>
+  </div>
+  <div class="act" style="margin-top:22px"><button class="btn next" id="cfgSave" style="width:100%">この内容で保存する</button></div>`;
+
+  document.getElementById("cfgPrefBack").onclick = ()=>{ CONFIG.pref=""; CONFIG.site=""; renderConfig(); };
+  document.getElementById("cfgSite").onchange = e=>{ CONFIG.site = e.target.value; renderConfig(); };
+  document.getElementById("cfgSiteFree").oninput = e=>{
+    if(e.target.value.trim()){ CONFIG.site = e.target.value.trim(); document.getElementById("cfgSite").value=""; }
+  };
+  document.getElementById("cfgWriter").oninput = e=>{ CONFIG.writer = e.target.value; };
+  box.querySelectorAll("[data-cfgpref]").forEach(b=> b.onclick = ()=>{
+    const pf=b.dataset.cfgpref, i=CONFIG.prefs.indexOf(pf);
+    i<0 ? CONFIG.prefs.push(pf) : CONFIG.prefs.splice(i,1);
+    renderConfig();
+  });
+  box.querySelectorAll("[data-rgall]").forEach(b=> b.onclick = (e)=>{
+    e.preventDefault(); e.stopPropagation();
+    const rg=b.dataset.rgall, all=REGIONS[rg];
+    const every = all.every(pf=>CONFIG.prefs.includes(pf));
+    CONFIG.prefs = every ? CONFIG.prefs.filter(pf=>!all.includes(pf))
+                         : [...new Set([...CONFIG.prefs, ...all])];
+    renderConfig();
+  });
+  box.querySelectorAll("[data-role]").forEach(b=> b.onclick = ()=>{ CONFIG.role=b.dataset.role; renderConfig(); });
+  document.getElementById("cfgTc").onchange = e=>{
+    CONFIG.termCount = +e.target.value;
+    if(CONFIG.termIndex > CONFIG.termCount) CONFIG.termIndex = CONFIG.termCount;
+    realignNo(); renderConfig();
+  };
+  document.getElementById("cfgTi").onchange = e=>{ CONFIG.termIndex = +e.target.value; realignNo(); renderConfig(); };
+  document.getElementById("cfgBo").onchange = e=>{ CONFIG.booths = +e.target.value; renderConfig(); };
+  box.querySelectorAll("[data-pharm]").forEach(b=> b.onclick = ()=>{ CONFIG.pharmacy=b.dataset.pharm; renderConfig(); });
+  box.querySelectorAll("[data-cut]").forEach(inp=> inp.onchange = ()=>{ CONFIG.cutoffs[+inp.dataset.cut]=inp.value; CONFIG.cutoffs.sort(); renderConfig(); });
+  box.querySelectorAll("[data-cutdel]").forEach(b=> b.onclick = ()=>{ CONFIG.cutoffs.splice(+b.dataset.cutdel,1); renderConfig(); });
+  document.getElementById("cutAdd").onclick = ()=>{ CONFIG.cutoffs.push("12:00"); CONFIG.cutoffs.sort(); renderConfig(); };
+
+  document.getElementById("cfgSave").onclick = ()=>{
+    if(!cfgReady()){ notify("設定が足りません","避難所と、聞き取りをする人の名前を入れてください。"); return; }
+    if(!CONFIG.prefs.length){ notify("地域が選ばれていません","かかりつけ病院を探す都道府県を、ひとつ以上選んでください。"); return; }
+    if(!CONFIG.cutoffs.length){ notify("締め切りが設定されていません","お薬のリクエスト締め切りを、ひとつ以上入れてください。"); return; }
+    rec.site = CONFIG.site; rec.writer = CONFIG.writer;
+    applyRole();
+    document.getElementById("siteName").textContent = CONFIG.site + "／" + CONFIG.writer;
+    const tn = document.getElementById("termName"); tn.hidden=false;
+    tn.textContent = `${ROLES[CONFIG.role].icon} ${ROLES[CONFIG.role].label}`
+      + (roleIs("reception") ? `　${CONFIG.termIndex}／${CONFIG.termCount}台目・次は${NEXT_NO}番` : "");
+    notify("保存しました", `${CONFIG.site}\n役割：${ROLES[CONFIG.role].label}\n担当：${CONFIG.writer}\n端末：${CONFIG.termIndex}／${CONFIG.termCount}台目（次は${NEXT_NO}番）\n検索する地域：${CONFIG.prefs.length}県`);
+    setMode("home");
+  };
+}
+
+/* ============ 画面ごとのヘルプ ============ */
+const HELP = {
+  s1:"いちばん困っていることを1つだけ選びます。迷ったら「その他」を選び、話を聞いてから振り分けてください。｜上の2つは医療のルート（オンライン診療・お薬のリクエスト）、「物資や生活」は行政の窓口、「家族・知人をさがしている」は探し人の掲示につながります。「その他」はスタッフが聞き取って振り分けます。｜行き先は画面には出していません。先に見えていると、大ごとにしたくない方が選ばなくなるためです。",
+  rx:"お薬の相談を受けた方が自動で並びます。受け取り方を「本人が取りに来る」「巡回で届ける」から選べます。送るときに入れた目安の時刻は、取りに来ていただく方にお伝えしてください。締め切りの前にまとめて送ってください。処方箋がなくても、お薬手帳や薬の包装で内容が確認できれば薬剤師が用意できる取り扱いがあります。",
+  m4x:"119番や窓口へ連絡したあとも、受付は最後まで進めてください。持病・薬・かかりつけ医が受付票に残っていると、救急隊や搬送先の医師がその場で確認できます。連絡は他のスタッフに頼み、受付は続けるのが理想です。",
+  s1c:"お名前を聞くより先に、急を要する状態かどうかだけを確かめます。選ぶ項目は、からだの相談とこころの相談で切り替わります。あてはまるものがあれば、すぐに案内画面に変わります。あてはまらない場合も、このあと通常どおり受付を続けます。",
+  s1b:"ご本人が来られないときは「ご家族・付き添いの方」を選びます。本人が嫌がっている場合は先に進めません。スタッフが本人のところへ伺ってください。",
+  s2:"必須は姓・名と「たずねてこられた方への対応」だけです。ほかは分かる範囲で構いません。急ぐときは飛ばしてください。フリガナは漢字を変換すると自動で入ります。",
+  s3:"避難所の中にいない方も登録できます。車中泊の方はナンバーと目印を必ず聞いてください。夜に巡回して車を探すときの手がかりになります。",
+  m4:"あてはまるものをすべて選びます。わからない項目は選ばなくて構いません。「毎日飲んでいる薬がある」を選ぶと、次にお薬の画面が出ます。",
+  m5:"薬が切れているかどうかが、いちばん大事な情報です。お薬手帳は写真に撮らず、通話のときにカメラへかざして医師に読み取ってもらいます。手帳がなくても、薬の袋や包装が残っていれば同じように使えます。",
+  m6:"病院名を打つと候補が出ます。候補になければ、聞いたとおりの名前のまま登録できます。分からなくても構いません。",
+  m7:"避難所での食事や介護の手配にも使う項目です。分かる範囲で。すべて飛ばしても先に進めます。",
+  m8:"共有先を読み上げてから確認してください。同意がないと医師にはつなげません。サインが書きにくいときは「画面いっぱいに大きく書く」を押すと大きな画面になります。",
+  m9:"システムは自動で判断しません。本人の様子を見て、スタッフが決めてください。迷ったときは「今すぐ」で構いません。",
+  m10:"医師が空くまで少し待つことがあります。受付票の内容は先に医師へ届いているので、待っている間に説明し直す必要はありません。",
+  t4:"あてはまるものをすべて選びます。物資と生活の相談はここでまとめて受け付けます。",
+  t5:"災害対策本部が復旧の順番を決めるために使います。分かる範囲で構いません。",
+  t6:"足りていないものを見つけるための質問です。使えているものを選んでください。",
+  t8:"この受付票には、病気やお薬の内容は入っていません。共有先は避難所と災害対策本部だけです。",
+  t9:"内容は台帳へ送られます。QRコードは、ほかの避難所へ移るときに見せてもらうためのものです。",
+  p1:"掲示に出る内容です。服装や持ち物など、見た人が思い出せる手がかりを聞いてください。",
+  p2:"ここで聞いた連絡先は掲示に出しません。ご自身が居場所を知られたくない事情がある場合は、名前を残さずに受け付けられます。",
+  p3:"お名前を掲示することになります。必ず読み上げて、範囲をご本人に選んでもらってください。心当たりがあるときは「掲示はせず控えだけ」を勧めてください。",
+  p4:"番号を控えてお渡しください。掲示の取り下げは、この番号で受け付けます。"
+};
+
+/* ============ screens ============ */
+const S = {};
+
+S.s1 = ()=>({
+  no:"受付 / 01", q:"どうされましたか",
+  hint:"いちばん困っていることを1つ選んでください。",
+  body: optList([
+    {l:"からだの具合が悪い／薬が足りない"},
+    {l:"気持ちがつらい／眠れない"},
+    {l:"物資や生活のことで困っている"},
+    {l:"家族・知人をさがしている"},
+    {l:"その他", s:"スタッフが内容を聞いて振り分けます"}
+  ],"pick1",false),
+  ok:()=>!!rec.route, req:true
+});
+
+const REQ = '<span class="req">必須</span>', ANY = '<span class="any">任意</span>';
+const isProxy = ()=> rec.reporter==="ご家族・付き添いの方";
+const signerLabel = ()=> isProxy()
+  ? `ご家族（${rec.relation||"続柄未選択"}）`
+  : "ご本人";
+const targetWord = ()=> isProxy() ? "支援を受ける方" : "ご本人";
+
+S.s1b = ()=>({
+  no:"受付 / 02", q:"いま受付に来ているのはどなたですか",
+  hint:"ご本人が来られなくても受付できます。ご家族が代わりに話す場合はそちらを選んでください。",
+  body: optList([
+    {l:"ご本人"},
+    {l:"ご家族・付き添いの方", s:"本人が動けない／受け答えが難しいとき"}
+  ],"reporter",false)
+  + (isProxy() ? `<div class="sec"><h2>受付に来た方について</h2><div class="fields">
+      <div class="f"><label>支援を受ける方との続柄${REQ}</label><div class="chips">
+        ${["配偶者","子","親","兄弟姉妹","その他の親族","親族以外"].map(s=>
+          `<button class="chip" data-chip="relation" data-val="${s}" aria-pressed="${rec.relation===s}">${s}</button>`).join("")}</div></div>
+      <div class="row">
+        <div class="f"><label for="rsei">受付に来た方の姓${REQ}</label><input type="text" id="rsei" data-bind="reporterSei" value="${esc(rec.reporterSei)}" placeholder="山田"></div>
+        <div class="f"><label for="rmei">名${REQ}</label><input type="text" id="rmei" data-bind="reporterMei" value="${esc(rec.reporterMei)}" placeholder="花子"></div>
+      </div>
+      ${rec.route==="medical"?`<div class="f"><label>ご本人の意思の確認${REQ}</label>
+        ${optList([
+          {l:"本人は診察を受けることに反対していない"},
+          {l:"本人が嫌がっている・はっきりしない", s:"無理に進めず、スタッフが本人のところへ伺います"}
+        ],"notRefused",false)}
+        <span class="note">動けないことと、嫌がっていることは別です。ここだけは必ず確かめてください。</span></div>`:""}
+    </div>
+    <p class="hint info" style="margin-top:16px">ご本人が来られない場合、次の画面で入れる「寝泊まりしている場所」が、巡回して見つけるための手がかりになります。できるだけ詳しく聞いてください。</p>
+    </div>`:""),
+  ok:()=>{
+    if(!rec.reporter) return false;
+    if(!isProxy()) return true;
+    if(!rec.relation || !rec.reporterSei.trim() || !rec.reporterMei.trim()) return false;
+    if(rec.route==="medical" && rec.notRefused!=="本人は診察を受けることに反対していない") return false;
+    return true;
+  }
+});
+
+S.s2 = ()=>({
+  no:"受付 / 03", q:`${targetWord()}のお名前と連絡先`,
+  hint:`必須はお名前だけです。${isProxy()?"ご家族の名前ではなく、支援を受ける方の名前を入れてください。":"ほかは分かる範囲で、後から足すこともできます。"}`,
+  body:`<div class="fields">
+    <div class="row">
+      <div class="f"><label for="sei">姓${REQ}</label><input type="text" id="sei" data-bind="sei" value="${esc(rec.sei)}" placeholder="山田"></div>
+      <div class="f"><label for="mei">名${REQ}</label><input type="text" id="mei" data-bind="mei" value="${esc(rec.mei)}" placeholder="太郎"></div>
+    </div>
+    <div class="f">
+      <div class="row">
+        <div class="f"><label for="seik">セイ${ANY}</label><input type="text" id="seik" data-bind="seiKana" lang="ja" value="${esc(rec.seiKana)}" placeholder="ヤマダ"></div>
+        <div class="f"><label for="meik">メイ${ANY}</label><input type="text" id="meik" data-bind="meiKana" lang="ja" value="${esc(rec.meiKana)}" placeholder="タロウ"></div>
+      </div>
+      <span class="note">漢字を変換すると自動で入ります。違うときは直接書き直せます。</span>
+    </div>
+
+    <div class="f"><label for="bd">生年月日${ANY}</label>
+      <input type="date" id="bd" data-bind="birth" value="${esc(rec.birth)}">
+      <span class="note">入れると下の年齢が自動で入ります。急ぐときは飛ばして構いません。</span></div>
+
+    <div class="f"><label for="ag">年齢${ANY}</label>
+      <input type="number" id="ag" data-bind="age" value="${esc(rec.age)}" placeholder="78" inputmode="numeric">
+      <span class="note">${rec.route==="medical"?"お薬の量を医師が判断する手がかりになります。分かれば入れてください。":"分かる範囲で。生年月日が分からなくても、ここだけで構いません。"}</span></div>
+
+    <div class="f"><label>性別${ANY}</label><div class="chips">
+      ${["男","女","その他・答えない"].map(s=>`<button class="chip" data-chip="sex" data-val="${s}" aria-pressed="${rec.sex===s}">${s}</button>`).join("")}
+    </div></div>
+    <div class="f"><label for="ad">自宅住所${ANY}</label><input type="text" id="ad" data-bind="addr" value="${esc(rec.addr)}" placeholder="〇〇市〇〇区〇〇1-2-3"></div>
+
+    <div class="sec"><h2>たずねてこられた方への対応${REQ}</h2>
+      ${optList([
+        {l:"ここにいると伝えてよい", s:"家族などがさがしに来たとき、お伝えします"},
+        {l:"伝えないでほしい", s:"どなたにもお伝えしません。理由は聞きません"}
+      ],"disclose",false)}
+      <p class="hint info" style="margin-top:12px">この項目は、どなたにも必ずお尋ねしています。理由を聞くことはありません。<br>あとから変えられますので、迷ったら「伝えないでほしい」を選んでおいてください。</p>
+    </div>
+    <div class="f"><label for="tl">電話番号${ANY}</label><input type="tel" id="tl" data-bind="tel" value="${esc(rec.tel)}" placeholder="09000000000" inputmode="numeric" maxlength="11">
+      <span class="note">ハイフン（-）は不要です。数字だけ入れてください。</span></div>
+    <div class="f"><label>いま連絡がつきますか${ANY}</label>
+      ${optList([
+        {l:"つながる"},
+        {l:"今はつながらない", s:"充電切れ・電波が届かない・手元にない"},
+        {l:"電話を持っていない"}],"reach",false)}
+      <span class="note">連絡の取り方が変わります。つながらない場合は、掲示や直接の声かけで伝えます。</span></div>
+    <div class="f"><label for="fm">一緒に避難している家族の人数${ANY}</label><input type="number" id="fm" data-bind="family" value="${esc(rec.family)}" placeholder="2" inputmode="numeric"></div>
+  </div>`,
+  ok:()=>rec.sei.trim() && rec.mei.trim() && !!rec.disclose,
+  wire:()=>{
+    autoKana("sei","seik","seiKana");
+    autoKana("mei","meik","meiKana");
+    const bd = document.getElementById("bd");
+    if(bd) bd.addEventListener("change", ()=>{
+      const a = ageFrom(bd.value);
+      if(a!==null){ rec.age = String(a); document.getElementById("ag").value = rec.age; renderSlip(); }
+    });
+  }
+});
+
+function ageFrom(iso){
+  if(!iso) return null;
+  const b = new Date(iso); if(isNaN(b)) return null;
+  const n = new Date();
+  let a = n.getFullYear() - b.getFullYear();
+  const m = n.getMonth() - b.getMonth();
+  if(m < 0 || (m === 0 && n.getDate() < b.getDate())) a--;
+  return (a >= 0 && a < 130) ? a : null;
+}
+
+function toKatakana(s){ return s.replace(/[\u3041-\u3096]/g, c => String.fromCharCode(c.charCodeAt(0)+0x60)); }
+
+function autoKana(srcId, dstId, dstKey){
+  const src = document.getElementById(srcId), dst = document.getElementById(dstId);
+  if(!src || !dst) return;
+  // ひらがな・カタカナ・長音のみを読みとして扱う（変換後の漢字は拾わない）
+  const KANA = /^[\u3041-\u309F\u30A0-\u30FF\uFF66-\uFF9Fー]+$/;
+  let buf = "", acc = dst.value || "";
+
+  src.addEventListener("compositionstart", ()=>{ buf = ""; });
+  src.addEventListener("compositionupdate", e=>{
+    const d = e.data || "";
+    if(KANA.test(d)) buf = d;   // 漢字が出てきた時点で更新を止め、直前の読みを保つ
+  });
+  src.addEventListener("compositionend", ()=>{
+    if(buf && !dst.dataset.touched){
+      acc += toKatakana(buf);
+      dst.value = acc;
+      rec[dstKey] = acc;
+      renderSlip();
+    }
+    buf = "";
+  });
+  src.addEventListener("input", ()=>{
+    if(src.value === ""){          // 漢字を消したら読みもやり直す
+      acc = "";
+      if(!dst.dataset.touched){ dst.value = ""; rec[dstKey] = ""; renderSlip(); }
+    }
+  });
+  dst.addEventListener("input", ()=>{ dst.dataset.touched = "1"; });
+}
+
+S.s3 = ()=>{
+  let extra = "";
+  if(rec.stay==="避難所"){
+    extra = `<div class="sec"><h2>避難所での場所</h2><div class="fields">
+      <div class="f"><label>避難所名</label>
+        <div class="picked"><div><div class="nm">${esc(rec.site)}</div><div class="ad">受付で選んだ避難所</div></div></div></div>
+      <div class="f"><label for="rm">館内のどのあたりですか<span class="note">（任意）</span></label>
+        <input type="text" id="rm" data-bind="shelterRoom" value="${esc(rec.shelterRoom)}" placeholder="体育館 東側 / 2階 家庭科室"></div>
+    </div></div>`;
+  } else if(rec.stay==="車中泊"){
+    const where = rec.carWhere;
+    extra = `<div class="sec"><h2>車を停めている場所</h2>
+      ${optList([{l:"この避難所の駐車場"},{l:"別の場所に停めている"}],"carWhereLabel",false)}
+      ${where==="other"?`<div class="fields" style="margin-top:14px">
+        <div class="f"><label>場所を探す</label>${searchWidget("plc","carPlace",PLACES,"道の駅、駐車場、公園など",true)}</div>
+        <div class="f"><label>地図でだいたいの位置を指す</label>
+          <div class="mapmock" id="map">${mapSVG()}<span class="cap">地図モック（実装時は Google Maps）</span></div>
+          <span class="note">${rec.carPin?`ピン設定済み  x:${rec.carPin.x.toFixed(0)} y:${rec.carPin.y.toFixed(0)}`:"地図をタップするとピンが立ちます"}</span></div>
+      </div>`:""}
+      <div class="fields" style="margin-top:14px">
+        <div class="row">
+          <div class="f"><label for="cn">車のナンバー（下4桁）${REQ}</label><input type="text" id="cn" data-bind="carNo" value="${esc(rec.carNo)}" inputmode="numeric" maxlength="4" placeholder="1234"></div>
+          <div class="f"><label for="ct">車種・色${ANY}</label><input type="text" id="ct" data-bind="carType" value="${esc(rec.carType)}" placeholder="白 軽自動車"></div>
+        </div>
+        <div class="f"><label for="cm">近くの目印${ANY}</label>
+          <input type="text" id="cm" data-bind="carMark" value="${esc(rec.carMark)}" placeholder="入口すぐ / 赤い車の隣">
+          <span class="note">巡回するスタッフが探す手がかりになります。</span></div>
+      </div>
+      <div class="sec"><h2>車の中の状態${REQ}</h2>
+        ${optList([
+          {l:"エンジンをかけて、エアコンや暖房を使っている", s:"マフラーの周りに雪や物が積もっていないか確認してください"},
+          {l:"エンジンは止めて、窓を少し開けている"},
+          {l:"エンジンは止めていて、閉め切っている", s:"暑さ・寒さがこもりやすい状態です"},
+          {l:"わからない"}
+        ],"carState",false)}
+        <p class="hint warn" style="margin-top:14px">車中泊では、足の血のかたまり（エコノミークラス症候群）と、マフラーがふさがれたときの排気ガス中毒に気をつける必要があります。あてはまる場合は、スタッフから声をかけてください。</p>
+      </div></div>`;
+  } else if(rec.stay==="自宅"||rec.stay==="知人宅"||rec.stay==="その他"){
+    extra = `<div class="sec"><h2>寝泊まりしている場所</h2><div class="fields">
+      <div class="f"><label for="ha">住所</label><input type="text" id="ha" data-bind="homeAddr" value="${esc(rec.homeAddr)}" placeholder="〇〇市〇〇区〇〇1-2-3">
+        <div class="chips"><button class="chip" data-chip="copyAddr" data-val="1" aria-pressed="false">自宅住所と同じ</button></div></div>
+      <div class="f"><label for="hm">目印<span class="note">（任意）</span></label><input type="text" id="hm" data-bind="homeMark" value="${esc(rec.homeMark)}" placeholder="青い屋根の家"></div>
+    </div></div>`;
+  }
+  return {
+    no:"受付 / 04", q:`${targetWord()}は、いまどこで寝泊まりしていますか`,
+    hint: isProxy()
+      ? "ご本人が受付に来られていません。巡回して見つけられるよう、場所と目印をできるだけ詳しく入れてください。"
+      : "支援や巡回を届けるために必要です。避難所の中にいない方も登録できます。",
+    body: optList(["避難所","車中泊","自宅","知人宅","その他"],"stay",false) + extra,
+    req:true,
+    ok:()=>{
+      if(!rec.stay) return false;
+      if(rec.stay==="車中泊") return !!rec.carNo && !!rec.carState;
+      return true;
+    },
+    wire:()=>{
+      wireSearch("plc","carPlace",PLACES,true);
+      const m = document.getElementById("map");
+      if(m) m.onclick = (e)=>{const r=m.getBoundingClientRect(); rec.carPin={x:e.clientX-r.left,y:e.clientY-r.top}; paint();};
+    }
+  };
+};
+
+function mapSVG(){
+  const p = rec.carPin;
+  return `<svg viewBox="0 0 400 210" preserveAspectRatio="none">
+    <rect width="400" height="210" fill="#DDE4DA"/>
+    <g stroke="#CBD4C7" stroke-width="1">${[...Array(9)].map((_,i)=>`<line x1="${i*50}" y1="0" x2="${i*50}" y2="210"/>`).join("")}
+    ${[...Array(5)].map((_,i)=>`<line x1="0" y1="${i*50}" x2="400" y2="${i*50}"/>`).join("")}</g>
+    <rect x="40" y="30" width="120" height="70" fill="#CFD9CB"/><rect x="240" y="120" width="110" height="60" fill="#CFD9CB"/>
+    <path d="M0 110 H400" stroke="#F2F4F0" stroke-width="16"/><path d="M200 0 V210" stroke="#F2F4F0" stroke-width="14"/>
+    ${p?`<g transform="translate(${p.x*(400/ (document.getElementById('map')?.clientWidth||400))},${p.y*(210/(document.getElementById('map')?.clientHeight||210))})">
+      <circle r="9" fill="#C41230" stroke="#fff" stroke-width="3"/></g>`:""}
+  </svg>`;
+}
+
+const REDIRECT = {
+  "陣痛が来ている・お産が近い":      {type:"119",    label:"119番へ", br:"body"},
+  "透析中の管や機器にトラブルがある": {type:"119",    label:"119番へ", br:"body"},
+  "子どもの息が苦しそう・けいれんしている": {type:"119", label:"119番へ", br:"body"},
+  "意識がはっきりしない・呼びかけに答えない": {type:"119", label:"119番へ", br:"body"},
+  "自分を傷つけてしまいそう": {type:"crisis", label:"専門の窓口へ", br:"mind"},
+  "消えてしまいたい気持ちが強い": {type:"crisis", label:"専門の窓口へ", br:"mind"}
+};
+const NONE_OPT = {l:"上のどれにもあてはまりません", s:"このまま受付を続けます"};
+function redirectFor(br){ return Object.keys(REDIRECT).filter(k=>REDIRECT[k].br===br); }
+
+const COND_BODY = [
+  "人工呼吸器を使っている","在宅酸素を使っている","透析を受けている","インスリン注射をしている",
+  "歯や口の急な痛みがある",
+  {l:"妊娠中で、すぐ処置が必要かもしれない"},
+  {l:"毎日飲んでいる薬がある", s:"次の画面でお薬について伺います"},
+  "当てはまらない・わからない"
+];
+const COND_MIND = [
+  "眠れない日が続いている",
+  "食べられない・食欲がない",
+  "動悸や息苦しさがある",
+  "以前から心のことで病院にかかっている",
+  {l:"毎日飲んでいる薬がある", s:"次の画面でお薬について伺います"},
+  "人と話すのがつらい・ひとりでいたい",
+  "当てはまらない・わからない"
+];
+
+S.m4 = ()=>({
+  no:"医療 / 01",
+  q: rec.branch==="mind" ? "いまのご様子を教えてください" : "いまの状況を教えてください",
+  hint:"あてはまるものをすべて選んでください。分からないものは選ばなくて大丈夫です。",
+  body: optList(rec.branch==="mind" ? COND_MIND : COND_BODY,"cond",true),
+  ok:()=>rec.cond.length>0, req:true
+});
+
+S.s1c = ()=>({
+  no:"受付 / 確認", q: rec.branch==="mind"
+    ? "先に、ひとつだけ確かめさせてください"
+    : "先に、いまの状態を確かめさせてください",
+  hint: rec.branch==="mind"
+    ? "いまのご様子にいちばん近いものを選んでください。どれを選んでも、このあと受付は続けられます。"
+    : "いまの状態にいちばん近いものを選んでください。どれを選んでも、このあと受付は続けられます。",
+  body: optList(
+    redirectFor(rec.branch).map(l=>({l}))
+      .concat([NONE_OPT])
+  ,"urgentPick",false),
+  ok:()=> !!rec.urgentPick, req:true,
+  wire:()=>{
+    const hit = REDIRECT[rec.urgentPick];
+    if(hit){
+      if(rec.redirectReason!==rec.urgentPick) rec.redirectAck=false;
+      rec.redirectType = hit.type; rec.redirectReason = rec.urgentPick;
+    } else if(rec.urgentPick){
+      rec.redirectType=""; rec.redirectReason=""; rec.redirectAck=false;
+    }
+  }
+});
+
+S.m4x = ()=>{
+  const is119 = rec.redirectType==="119";
+  return {
+    no:"医療 / 緊急", q: is119 ? "119番をお願いします" : "専門の窓口にご案内します",
+    hint:"オンライン診療の順番を待つよりも、こちらが優先されます。",
+    body: is119 ? `
+      <div class="callbox" style="border-color:var(--urgent)">
+        <div style="font-size:15px;color:var(--ink2);margin-bottom:6px">「${esc(rec.redirectReason)}」を選択</div>
+        <div style="font-size:52px;font-weight:700;color:var(--urgent);letter-spacing:.04em">119番</div>
+        <p style="color:var(--ink2);font-size:15px;margin:10px 0 0">避難所の場所と、いまの状況を落ち着いて伝えてください。<br>周りにいる方にも協力を呼びかけてください。</p>
+      </div>
+      <div class="fields" style="margin-top:20px">
+        <div class="f"><label>119番の手配状況</label>
+          ${optList(["もう連絡した／連絡している","まだ連絡していない"],"emCalled",false)}</div>
+      </div>` : `
+      <div class="callbox" style="border-color:var(--warn)">
+        <div style="font-size:16px;color:var(--ink);margin-bottom:12px">話してくださって、ありがとうございます。</div>
+        <div style="font-size:15px;text-align:left;background:var(--warn-soft);border-radius:8px;padding:16px 18px;line-height:2">
+          <b>よりそいホットライン</b>　0120-279-338（24時間・無料）<br>
+          <b>いのちの電話</b>　0570-783-556
+        </div>
+        <p style="color:var(--ink2);font-size:14px;margin:14px 0 0">スタッフは、その場を離れずそばにいてください。<br>一人にしないことが、いちばんの助けになります。</p>
+      </div>
+      <div class="fields" style="margin-top:20px">
+        <div class="f"><label>いまの対応</label>
+          ${optList(["スタッフがそばに付き添っている","窓口に連絡した・している"],"emCalled",true)}</div>
+      </div>`,
+    ok:()=>true,
+    wire:()=>{}, 
+    footer: `<p class="hint info" style="margin-top:20px">${is119
+      ? "連絡と並行して、受付を最後まで進めてください。持病や飲んでいる薬が受付票に残っていると、救急隊や搬送先の医師がその場で確認できます。"
+      : "お電話と並行して、受付を最後まで進めてください。受付票が残っていると、あとから保健師や医師が様子を見にうかがえます。"}</p>
+    <div class="act" style="margin-top:14px">
+      <button class="btn next" id="emContinue" style="width:100%">受付を続ける</button>
+    </div>`
+  };
+};
+
+S.m5 = ()=>({
+  no:"医療 / 02", q:"お薬について",
+  hint:"いま手元にある分で足りているかが、いちばん大事な情報です。",
+  body:`<div class="fields">
+    <div class="f"><label>いまの状況${REQ}</label>${optList([
+      {l:"続けて飲めている"},{l:"切れている・足りない", s:"医師への優先度が上がります"}],"medOn",false)}</div>
+    <div class="sec"><h2>薬の種類${ANY}<span class="note" style="display:block;font-weight:400;margin-top:4px">分かる範囲で・複数可</span></h2>
+      ${optList(["血圧の薬","糖尿病の薬","気持ちを落ち着ける薬・眠る薬","その他"],"medKind",true)}
+      ${rec.medKind.includes("その他")?`<div class="f" style="margin-top:12px"><label for="mo">その他の薬の名前</label>
+        <input type="text" id="mo" data-bind="medOther" value="${esc(rec.medOther)}" placeholder="スタッフが聞き取って入力"></div>`:""}
+    </div>
+    <div class="sec"><h2>お薬手帳${ANY}</h2>
+      ${optList([{l:"持っている", s:"診察のときに、カメラに見せていただきます"},"持っていない"],"techo",false)}
+      <p class="hint info" style="margin-top:12px">写真は撮りません。通話中にカメラへかざして、医師に読み取ってもらいます。手帳が手元にない場合は、覚えている範囲で構いません。</p>
+    </div>
+  </div>`,
+  ok:()=>!!rec.medOn
+});
+
+S.m6 = ()=>({
+  no:"医療 / 03", q:"かかりつけの病院",
+  hint:"名前を入力すると候補が出ます。候補になければ、聞いたままの名前で登録できます。",
+  body:`<div class="fields">
+    <div class="f"><label>病院・クリニック名${REQ}<span class="note" style="display:block;font-weight:400;margin-top:4px">分からなければ下の「わからない」を押してください</span></label>
+      ${searchWidget("hp","clinic",HOSPITALS,"みなみ内科 など",true)}
+      <span class="note">${CONFIG.prefs.length?esc(CONFIG.prefs.join("・"))+" の医療機関から探します":"設定で地域が選ばれていません"}</span></div>
+    <div class="f"><div class="chips">
+      <button class="chip" data-chip="clinicUnknown" data-val="1" aria-pressed="${rec.clinic&&rec.clinic.n==="わからない"}">わからない</button></div></div>
+  </div>`,
+  ok:()=>!!rec.clinic,
+  wire:()=>wireSearch("hp","clinic",HOSPITALS.filter(h=>!CONFIG.prefs.length||CONFIG.prefs.includes(h.pref)),true)
+});
+
+S.m7 = ()=>({
+  no:"医療 / 04", q:"あわせて確認させてください",
+  hint:"避難所での食事や介護の手配にも使う項目です。",
+  body:`<div class="fields">
+    <div class="f"><label>食物アレルギー${ANY}</label>${optList(["有","無"],"allergy",false)}
+      ${rec.allergy==="有"?`<input type="text" data-bind="allergyWhat" value="${esc(rec.allergyWhat)}" placeholder="原因となる食べ物">`:""}</div>
+    <div class="f"><label>妊産婦・乳幼児${ANY}</label>${optList(["有","無"],"pregnant",false)}</div>
+    <div class="f"><label>要介護（支援）認定${ANY}</label><div class="chips">
+      ${["要支援1","要支援2","要介護1","要介護2","要介護3","要介護4","要介護5","区分不明","無"].map(s=>
+        `<button class="chip" data-chip="care" data-val="${s}" aria-pressed="${rec.care===s}">${s}</button>`).join("")}</div></div>
+    <div class="f"><label>障害者手帳${ANY}</label>${optList(["身体障害者手帳","精神障害者保健福祉手帳","療育手帳","無"],"techoDis",true)}</div>
+    <div class="f"><label>デイサービス・ヘルパー等の利用${ANY}</label>
+      ${optList(["被災前と変わらず利用の見通しあり","利用の見通しが立たない","わからない","無"],"service",false)}</div>
+  </div>`,
+  ok:()=>true
+});
+
+function signBlock(){
+  return `<div class="f" style="margin-top:16px"><label>${signerLabel()}のサイン${REQ}</label>
+    <div class="sigwrap">
+      <canvas id="sig"></canvas>
+      <div class="base"></div>
+      ${rec.sign?"":'<span class="ph">ここに指またはペンで書いてください</span>'}
+      <button class="sigclear" id="sigClear">消す</button>
+    </div>
+    <button class="sigopen" id="sigOpen">画面いっぱいに大きく書く</button>
+    <span class="note">${isProxy()?"ご本人が書けない状態のため、受付に来たご家族が代わりに署名します。":"タブレットに直接書けます。"}</span></div>
+    <div class="stamp" style="margin-top:12px">同意日時：${esc(rec.consentAt||"——")}<br>聞き取り担当：${esc(rec.writer||"——")}<br>署名者：${esc(signerLabel())}${isProxy()?" "+esc([rec.reporterSei,rec.reporterMei].filter(Boolean).join(" ")):""}</div>`;
+}
+
+function wireSign(){
+  const c = document.getElementById("sig"); if(!c) return;
+  const rect = c.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+  c.width = rect.width * dpr; c.height = rect.height * dpr;
+  const ctx = c.getContext("2d");
+  ctx.scale(dpr, dpr);
+  ctx.lineWidth = 2.6; ctx.lineCap = "round"; ctx.lineJoin = "round"; ctx.strokeStyle = "#16283C";
+  if(rec.sign){ const im = new Image(); im.onload = ()=>ctx.drawImage(im,0,0,rect.width,rect.height); im.src = rec.sign; }
+  let drawing = false;
+  const pos = e => { const r = c.getBoundingClientRect(); return {x:e.clientX-r.left, y:e.clientY-r.top}; };
+  c.addEventListener("pointerdown", e=>{
+    e.preventDefault(); drawing = true;
+    if(c.setPointerCapture) try{ c.setPointerCapture(e.pointerId); }catch(_){}
+    const ph = c.parentElement.querySelector(".ph"); if(ph) ph.remove();
+    const p = pos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y);
+  });
+  c.addEventListener("pointermove", e=>{ if(!drawing) return; e.preventDefault(); const p = pos(e); ctx.lineTo(p.x,p.y); ctx.stroke(); });
+  const finish = ()=>{
+    if(!drawing) return; drawing = false;
+    rec.sign = c.toDataURL("image/png");
+    rec.consentAt = nowStamp();
+    document.getElementById("btnNext").disabled = !S[flow[idx]]().ok();
+    const st = document.querySelector(".stamp");
+    if(st) st.innerHTML = `同意日時：${esc(rec.consentAt)}<br>聞き取り担当：${esc(rec.writer)}<br>署名者：${esc(signerLabel())}${isProxy()?" "+esc([rec.reporterSei,rec.reporterMei].filter(Boolean).join(" ")):""}`;
+    renderSlip();
+  };
+  c.addEventListener("pointerup", finish);
+  c.addEventListener("pointercancel", finish);
+  const cl = document.getElementById("sigClear");
+  if(cl) cl.onclick = ()=>{ ctx.clearRect(0,0,c.width,c.height); rec.sign=""; rec.consentAt=""; paint(); };
+  const op = document.getElementById("sigOpen");
+  if(op) op.onclick = openSigModal;
+}
+
+function openSigModal(){
+  const m = document.getElementById("sigModal");
+  document.getElementById("smWho").textContent = signerLabel();
+  m.hidden = false;
+  const c = document.getElementById("sigBig");
+  c.style.height = ""; c.style.width = "";
+  const r = c.getBoundingClientRect(), dpr = window.devicePixelRatio||1;
+  c.style.width = r.width+"px"; c.style.height = r.height+"px";
+  c.width = Math.round(r.width*dpr); c.height = Math.round(r.height*dpr);
+  const ctx = c.getContext("2d");
+  ctx.scale(dpr,dpr); ctx.lineWidth=4; ctx.lineCap="round"; ctx.lineJoin="round"; ctx.strokeStyle="#16283C";
+  if(rec.sign){ const im=new Image(); im.onload=()=>ctx.drawImage(im,0,0,r.width,r.height); im.src=rec.sign; }
+  let drawing=false;
+  const pos = e => { const b=c.getBoundingClientRect(); return {x:e.clientX-b.left,y:e.clientY-b.top}; };
+  c.onpointerdown = e=>{ e.preventDefault(); drawing=true;
+    if(c.setPointerCapture) try{ c.setPointerCapture(e.pointerId); }catch(_){}
+    const p=pos(e); ctx.beginPath(); ctx.moveTo(p.x,p.y); };
+  c.onpointermove = e=>{ if(!drawing) return; e.preventDefault(); const p=pos(e); ctx.lineTo(p.x,p.y); ctx.stroke(); };
+  c.onpointerup = c.onpointercancel = ()=>{ drawing=false; };
+  document.getElementById("smClear").onclick = ()=>ctx.clearRect(0,0,c.width,c.height);
+  const close = ()=>{ m.hidden = true; document.removeEventListener("keydown", onEsc); };
+  const onEsc = e=>{ if(e.key==="Escape") close(); };
+  document.addEventListener("keydown", onEsc);
+  document.getElementById("smCancel").onclick = close;
+  document.getElementById("smDone").onclick = ()=>{
+    rec.sign = c.toDataURL("image/png");
+    rec.consentAt = nowStamp();
+    close();
+    paint();
+  };
+}
+
+function nowStamp(){
+  const d = new Date(), p = n => String(n).padStart(2,"0");
+  return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+
+S.m8 = ()=>({
+  no:"医療 / 05", q:"情報を共有することへの同意",
+  hint:`同意がないと、医師につなぐことができません。${isProxy()?"ご本人が同意できない状態のため、ご家族に代わって確認します。":"内容を読み上げてから確認してください。"}`,
+  body:`<div class="consent">
+    <p>ここまで記入した内容を、次のところへ共有します。</p>
+    <ul>
+      <li>この避難所の管理者</li>
+      <li>市町村の災害対策本部</li>
+      <li>保健医療福祉調整本部</li>
+      <li>これから診察する医師</li>
+    </ul>
+    <p style="font-size:14px;color:var(--ink2)">診察の内容と処方は、終わったあとPDFにしてご本人とかかりつけの病院にお渡しします。このシステムには残しません。</p>
+    <div class="f"><label>共有への同意${REQ}</label>
+    ${optList([{l:"同意する"},{l:"同意しない", s:"医師にはつなげません。生活相談のみ受け付けます"}],"consentPick",false)}</div>
+    ${rec.consent?signBlock():""}
+  </div>`,
+  ok:()=>rec.consent && !!rec.sign,
+  wire: wireSign
+});
+
+S.m9 = ()=>({
+  no:"医療 / 06", q:"どちらでつなぎますか",
+  hint:"スタッフが本人の様子を見て判断してください。ここは自動判定しません。",
+  body: optList([
+    {l:"今すぐ医師につなぐ", s:"薬が切れている・強いつらさがある・緊急の項目に当てはまる"},
+    {l:"予約でよい", s:"落ち着いている・薬はまだ残っている"}
+  ],"urgency",false),
+  ok:()=>!!rec.urgency, req:true
+});
+
+S.m10 = ()=>{
+  if(rec.assigned && rec.callDone){
+    return {no:"医療 / 07", q:"診察が終わりました",
+      hint:"受付票に記録しました。番号を紙に書いてお渡しし、受付を終えてください。",
+      body:`<div class="callbox">
+        <div style="font-size:20px;font-weight:700">${esc(rec.assigned.n)} 医師</div>
+        <div style="color:var(--ink2);margin-top:4px">${esc(rec.callResult||"")}</div>
+        ${rec.callResult==="お薬が処方された"
+          ? `<p class="hint info" style="margin:16px 0 0;text-align:left">「お薬のリクエスト」に載せました。締め切りまでにまとめて送ってください。</p>` : ""}
+        ${rec.callResult==="医療機関への搬送が必要"
+          ? `<p class="hint warn" style="margin:16px 0 0;text-align:left">医師の判断で119番へ連絡します。搬送の準備をしてください。</p>` : ""}
+        <button class="btn" id="callAgain" style="margin-top:16px">もう一度つなぐ</button>
+      </div>
+      ${qrPanel()}`,
+      ok:()=>true, last:true,
+      wire:()=>{ const b=document.getElementById("callAgain"); if(b) b.onclick=()=>startCall(); }};
+  }
+  if(rec.assigned){
+    return {no:"医療 / 07", q:"医師につながりました",
+      hint:"タブレットを本人に渡してください。周りに聞こえる場所ではイヤホンをお使いください。",
+      body:`<div class="callbox">
+        <div style="font-size:22px;font-weight:700">${esc(rec.assigned.n)} 医師</div>
+        <div style="color:var(--ink2)">${esc(rec.assigned.s)}</div>
+        <div class="link">この画面の中で通話が始まります（別のアプリは開きません）</div>
+        <button class="bigred" style="background:var(--med)" id="callStart">通話をはじめる</button>
+        <p class="hint" style="margin:16px 0 0;font-size:14px">医師の画面には、受付票の内容が先に表示されています。</p>
+      </div>`,
+      ok:()=>false,
+      wire:()=>{ const b=document.getElementById("callStart"); if(b) b.onclick=()=>startCall(); }};
+  }
+  if(rec.urgency==="今すぐ医師につなぐ"){
+    return {no:"医療 / 07", q:"空いている医師にすぐつなぎます",
+      hint:"待機中の医師のうち、いちばん長く待っている人に自動で割り当てます。応答がなければ次の医師に回します。",
+      body:`<div id="matchArea"><button class="bigred" id="goNow">今すぐつなぐ</button>
+        <p class="hint" style="margin-top:16px;font-size:14px">現在の待機医師 ${DOCTORS.filter(d=>d.w==="待機中").length} 名</p></div>`,
+      ok:()=>false,
+      wire:()=>{
+        const b=document.getElementById("goNow");
+        if(b) b.onclick=()=>{
+          document.getElementById("matchArea").innerHTML=`<div class="callbox"><div class="spin"></div>医師を探しています…</div>`;
+          setTimeout(()=>{rec.assigned=DOCTORS[0];paint();},1600);
+        };
+      }};
+  }
+  return {no:"医療 / 07", q:"医師を選んでください",
+    hint:"いま対応できると回答した医師です。",
+    body:`<div class="opts">${DOCTORS.map((d,i)=>`<button class="dr" data-dr="${i}" ${d.w!=="待機中"?'style="opacity:.55"':""}>
+      <span class="av">${esc(d.n.slice(0,1))}</span><span><span class="nm">${esc(d.n)}</span><br><span class="sp">${esc(d.s)}</span></span>
+      <span class="st">${esc(d.w)}</span></button>`).join("")}</div>`,
+    ok:()=>false,
+    wire:()=>document.querySelectorAll("[data-dr]").forEach(b=>b.onclick=()=>{
+      const d=DOCTORS[+b.dataset.dr]; if(d.w!=="待機中"){notify("この医師はまだ対応できません","「あと約10分」と表示されている医師は、いま別の対応中です。");return;}
+      rec.assigned=d; paint();})};
+};
+
+S.t4 = ()=>({
+  no:"生活 / 01", q:"何でお困りですか",
+  hint:"あてはまるものをすべて選んでください。",
+  body: optList([
+    "水・食料・トイレ・入浴などの生活物資","電気・水道・ガスなどライフラインの相談",
+    "家の被害についての相談","情報が届いていない・知りたいことがある","その他"
+  ],"needs",true),
+  ok:()=>rec.needs.length>0, req:true
+});
+
+S.t5 = ()=>({
+  no:"生活 / 02", q:"被害の状況",
+  hint:"災害対策本部が復旧の優先順位をつけるために使います。",
+  body:`<div class="fields">
+    <div class="f"><label>使えなくなっているもの${ANY}<span class="note" style="display:block;font-weight:400;margin-top:4px">複数選べます</span></label>
+      ${optList(["ガス","水道","電気","下水道","固定電話","携帯電話","インターネット"],"lifeline",true)}</div>
+    <div class="sec"><h2>家屋の被害${REQ}</h2>
+      ${optList([
+        {l:"極めて大きな被害があった", s:"流失・倒壊・土砂による埋没など"},
+        {l:"修繕が必要な程度の被害があった", s:"瓦が落ちた、外壁がはがれたなど"},
+        {l:"被害があった"},{l:"被害はなかった"}],"damage",false)}</div>
+  </div>`,
+  ok:()=>!!rec.damage
+});
+
+S.t6 = ()=>({
+  no:"生活 / 03", q:"避難所で使えているもの",
+  hint:"足りていないものを見つけるための質問です。",
+  body: optList(["応急給水","食事","トイレ","生活物資","入浴","行政・ボランティアからの情報","利用していない"],"shelterUse",true),
+  ok:()=>rec.shelterUse.length>0, req:true
+});
+
+S.t8 = ()=>({
+  no:"生活 / 04", q:"情報を共有することへの同意",
+  hint:"共有先を読み上げてから確認してください。",
+  body:`<div class="consent">
+    <p>ここまで記入した内容を、次のところへ共有します。</p>
+    <ul><li>この避難所の管理者</li><li>市町村の災害対策本部</li></ul>
+    <p style="font-size:14px;color:var(--ink2)">この受付票には、病気やお薬の内容は含まれていません。</p>
+    <div class="f"><label>共有への同意${REQ}</label>
+    ${optList(["同意する","同意しない"],"consentPick",false)}</div>
+    ${rec.consent?signBlock():""}
+  </div>`,
+  ok:()=>rec.consent && !!rec.sign,
+  wire: wireSign
+});
+
+S.t9 = ()=>({
+  no:"生活 / 05", q:"受け付けました",
+  hint:"内容は災害対策本部の台帳に送られます。",
+  body:`<div class="callbox">
+    <div style="font-size:20px;font-weight:700;margin-bottom:8px">受付番号 <span style="font-family:var(--mono)">${slipNo()}</span>番</div>
+    <p style="color:var(--ink2);font-size:15px;margin:0 0 16px">避難所名・困りごと・被害状況を、被災者アセスメント調査票と同じ項目でCSV出力します。</p>
+    <button class="btn no-print" style="background:var(--adm);border-color:var(--adm);color:#fff" onclick="notify('モックです','実装では、CSV／API連携で台帳へ送信します。')">台帳へ送る（CSV）</button>
+  </div>
+  ${qrPanel()}`,
+  ok:()=>true, last:true
+});
+
+/* ============ slip ============ */
+let SLIP_NO = null, NEXT_NO = 1;
+function maxIssued(){
+  const all = [...RECORDS.map(r=>+r.no), ...QUEUE.map(q=>+q.no), ...RXLIST.map(r=>+r.no), ...NOTICES.map(n=>+n.no)];
+  return all.length ? Math.max(...all.filter(n=>!isNaN(n))) : 0;
+}
+// 台数が変わっても、それまでの最大番号より先から再開する
+function realignNo(){
+  const c = CONFIG.termCount, i = CONFIG.termIndex, from = maxIssued();
+  let n = i;
+  while(n <= from) n += c;
+  NEXT_NO = n;
+}
+function slipNo(){
+  if(!SLIP_NO){ SLIP_NO = String(NEXT_NO); NEXT_NO += CONFIG.termCount; }
+  return SLIP_NO;
+}
+
+function line(k,v,flag){
+  if(!v||(Array.isArray(v)&&!v.length)) return "";
+  const val = Array.isArray(v)?v.join("、"):v;
+  return `<div class="ln"><dt>${esc(k)}</dt><span class="dots"></span><dd>${esc(val)}${flag||""}</dd></div>`;
+}
+function grp(title, inner){ return inner.trim()?`<div class="grp"><h3>${title}</h3><dl>${inner}</dl></div>`:""; }
+
+function renderSlip(){
+  const b = document.getElementById("slipBody");
+  document.getElementById("slipNo").textContent = rec.route ? slipNo()+"番" : "番号 ——";
+  document.getElementById("siteName").textContent = rec.site || "避難所 未設定";
+  let h = "";
+  const rep = [rec.reporterSei,rec.reporterMei].filter(Boolean).join(" ");
+  h += grp("受付", line("避難所",rec.site)+line("聞き取り",rec.writer)
+    + line("受付に来た人", rec.reporter && (isProxy()? `${rec.relation||"続柄未"}／${rep||"氏名未"}` : "本人"),
+        isProxy()?'<span class="flag urg">代理</span>':"")
+    + (rec.route?line("区分", rec.route==="medical"?"医療":"生活・行政",
+        rec.route==="medical"?'<span class="flag med">MED</span>':'<span class="flag adm">ADM</span>'):""));
+  const fullName = [rec.sei,rec.mei].filter(Boolean).join(" ");
+  const fullKana = [rec.seiKana,rec.meiKana].filter(Boolean).join(" ");
+  h += grp("本人", line("氏名",fullName)+line("フリガナ",fullKana)+line("生年月日",rec.birth)+line("年齢",rec.age&&rec.age+"歳")
+    +line("性別",rec.sex)+line("住所",rec.addr)+line("電話",rec.tel)
+    +line("連絡", rec.reach, rec.reach&&rec.reach!=="つながる"?'<span class="flag urg">要直接</span>':"")
+    +line("同行家族",rec.family&&rec.family+"人")
+    +line("在所の開示", rec.disclose, rec.disclose==="伝えないでほしい"?'<span class="flag urg">非開示</span>':""));
+  let loc = line("滞在",rec.stay)+line("館内",rec.shelterRoom);
+  if(rec.stay==="車中泊"){
+    loc += line("停車場所", rec.carWhere==="here"?rec.site+" 駐車場":(rec.carPlace?rec.carPlace.n:""))
+      + (rec.carPin?line("地図ピン","設定済み"):"")
+      + line("ナンバー",rec.carNo)+line("車種・色",rec.carType)+line("目印",rec.carMark)
+      + line("車内の状態", rec.carState,
+          rec.carState==="エンジンは止めていて、閉め切っている" ? '<span class="flag urg">暑さ寒さ注意</span>'
+          : rec.carState==="エンジンをかけて、エアコンや暖房を使っている" ? '<span class="flag urg">排気口確認</span>' : "");
+  }
+  loc += line("住所",rec.homeAddr)+line("目印",rec.homeMark);
+  h += grp("滞在場所", loc);
+  if(rec.route==="medical"){
+    h += grp("医療", line("状況",rec.cond)+line("服薬",rec.medOn)+line("薬の種類",rec.medKind)+line("その他薬",rec.medOther)
+      +line("お薬手帳",rec.techo)
+      +(rec.clinic?line("かかりつけ",rec.clinic.n, rec.clinic.verified?'<span class="flag med">照合済</span>':'<span class="flag urg">本人申告</span>'):""));
+    h += grp("要配慮", line("アレルギー",rec.allergy==="有"?("有："+rec.allergyWhat):rec.allergy)
+      +line("妊産婦・乳幼児",rec.pregnant)+line("要介護",rec.care)+line("手帳",rec.techoDis)+line("公的サービス",rec.service));
+    h += grp("緊急対応", line("該当", rec.redirectReason,
+        rec.redirectType==="119" ? '<span class="flag urg">119番</span>'
+        : rec.redirectType==="crisis" ? '<span class="flag urg">専門窓口</span>' : "")
+      + line("対応", rec.emCalled));
+    h += grp("接続", line("同意", rec.consent&&rec.sign ? (isProxy()?"代諾（"+(rec.relation||"")+"）":"本人同意")+"・"+rec.consentAt : "")
+      +line("緊急度",rec.urgency, rec.urgency==="今すぐ医師につなぐ"?'<span class="flag urg">急</span>':"")
+      +(rec.assigned?line("担当医",rec.assigned.n):""));
+  }
+  if(rec.route==="search"){
+    h += grp("さがす", line("さがす方",[rec.seekSei,rec.seekMei].filter(Boolean).join(" "))
+      +line("ふりがな",[rec.seekSeiKana,rec.seekMeiKana].filter(Boolean).join(" "))
+      +line("関係",rec.seekRel)+line("特徴",rec.seekFeature)+line("最後に",rec.seekLast)
+      +line("掲示範囲",rec.publish)
+      +line("受付した方", rec.anonFinder?"匿名（受付番号のみ）":[rec.finderSei,rec.finderMei].filter(Boolean).join(" "),
+          rec.anonFinder?'<span class="flag urg">匿名</span>':"")
+      +line("在所の開示", rec.disclose, rec.disclose==="伝えないでほしい"?'<span class="flag urg">非開示</span>':"")
+      +line("同意", rec.sign?rec.consentAt:""));
+  }
+  if(rec.route==="admin"){
+    h += grp("生活・行政", line("困りごと",rec.needs)+line("ライフライン",rec.lifeline)+line("家屋",rec.damage)+line("利用中",rec.shelterUse)
+      +line("同意", rec.consent&&rec.sign ? (isProxy()?"代諾（"+(rec.relation||"")+"）":"本人同意")+"・"+rec.consentAt : ""));
+  }
+  b.innerHTML = h || `<p class="empty">記入した内容がここに順番に写ります。医師に渡す前にスタッフが読み上げて確認できます。</p>`;
+}
+
+/* ============ queue ============ */
+let QUEUE = [];   // {no, route, urgent, status:'waiting'|'now'|'done', at}
+const MINUTES_PER = 12;
+
+function enqueue(){
+  const no = slipNo();
+  if(rec.route!=="medical") return no;   // 医師を待つ人だけが列に並ぶ
+  if(QUEUE.some(q=>q.no===no)) return no;
+  const c = nextCutoff();
+  QUEUE.push({
+    no, route: rec.route,
+    urgent: rec.urgency==="今すぐ医師につなぐ",
+    cutoff: (rec.medOn==="切れている・足りない" && c && c.today && c.mins<=90) ? 1 : 0,
+    status:"waiting", at: nowStamp()
+  });
+  sortQueue(); renderBoard();
+  return no;
+}
+function sortQueue(){
+  const w = QUEUE.filter(q=>q.status==="waiting");
+  w.sort((a,b)=> (b.urgent-a.urgent) || (b.cutoff-a.cutoff) || (a.at<b.at?-1:1));
+  QUEUE = QUEUE.filter(q=>q.status!=="waiting").concat(w);
+}
+function waiting(){ return QUEUE.filter(q=>q.status==="waiting"); }
+function current(){ return QUEUE.find(q=>q.status==="now") || null; }
+function currentAll(){ return QUEUE.filter(q=>q.status==="now"); }
+function urgentReason(no){
+  const r = RECORDS.find(x=>x.no===no);
+  const q = QUEUE.find(x=>x.no===no);
+  const why = [];
+  if(r && r.medOn==="切れている・足りない") why.push("薬が切れている");
+  if(q && q.cutoff) why.push("配送の締め切りが近い");
+  if(r && r.urgency==="今すぐ医師につなぐ") why.push("スタッフが今すぐと判断");
+  if(r && r.redirect) why.push(r.redirect);
+  return why;
+}
+function boothsFree(){ return Math.max(0, CONFIG.booths - currentAll().length); }
+
+function renderBoard(){
+  const cur = current(), w = waiting();
+  if(!document.getElementById("modeHome").hidden) renderHome();
+  const bn = document.getElementById("bNow"); if(!bn) return;
+  const nowList = currentAll();
+  bn.innerHTML = nowList.length
+    ? nowList.map(q=>`<span class="bnowno">${esc(q.no)}<span class="ban">番</span></span>`).join("")
+    : `<span class="none">——</span>`;
+  document.getElementById("bNowSub").textContent = nowList.length
+    ? (nowList.length>1 ? `${nowList.length}人の方が診察中です` : "オンライン診察中です")
+    : "呼び出しはまだありません";
+  const bn2=document.getElementById("bNet");
+  if(bn2){ const t=netTotals(); bn2.textContent = t.total; }
+  const bc2=document.getElementById("bCut"); if(bc2) bc2.textContent = (nextCutoff()||{t:"—"}).t;
+  document.getElementById("bWait").textContent = w.length;
+  document.getElementById("bEta").textContent = w.length * MINUTES_PER;
+  const list = document.getElementById("bList");
+  list.innerHTML = w.length
+    ? w.map((q,i)=>`<li class="${i===0?"head":""}">${esc(q.no)}<span class="ban">番</span></li>`).join("")
+    : `<li class="none">お待ちの方はいません</li>`;
+
+  const hc = document.getElementById("hCall");
+  if(hc) hc.textContent = cur ? `${cur.no}番を対応中` : (w.length ? `${w.length}人お待ち` : "待ちなし");
+  const miss = QUEUE.filter(q=>q.status==="miss");
+  const mw = document.getElementById("bMissWrap");
+  mw.hidden = !miss.length;
+  document.getElementById("bMiss").innerHTML = miss.map(q=>`<li>${esc(q.no)}<span class="ban">番</span></li>`).join("");
+}
+
+
+function qrPayload(){
+  const nm=[rec.sei,rec.mei].filter(Boolean).join(" ");
+  const parts=[`受付${slipNo()}番`, rec.site, nm];
+  if(rec.age) parts.push(rec.age+"歳");
+  if(rec.stay) parts.push("滞在:"+rec.stay+(rec.carNo?"("+rec.carNo+")":""));
+  if(rec.route==="medical"){
+    if(rec.medOn) parts.push("薬:"+(rec.medKind.join(",")||"—")+"/"+rec.medOn);
+    if(rec.clinic) parts.push("かかりつけ:"+rec.clinic.n);
+  }
+  if(rec.route==="search") parts.push("さがす:"+[rec.seekSei,rec.seekMei].filter(Boolean).join(" "));
+  if(rec.disclose==="伝えないでほしい") parts.push("★在所非開示");
+  let t=parts.filter(Boolean).join(" / ");
+  const enc=new TextEncoder();
+  while(enc.encode(t).length>200) t=t.slice(0,-1);
+  return t;
+}
+
+function qrPanel(){
+  const nm=[rec.sei,rec.mei].filter(Boolean).join(" ");
+  return `<div class="qrbox">
+    <div class="qrhd">この受付票を持って行けます</div>
+    <div class="qrbd">
+      <div class="qrimg">${QR.svg(qrPayload(), 210)}</div>
+      <dl class="qrlist">
+        <div><dt>受付番号</dt><dd>${esc(slipNo())}番</dd></div>
+        <div><dt>避難所</dt><dd>${esc(rec.site)}</dd></div>
+        ${nm?`<div><dt>お名前</dt><dd>${esc(nm)}</dd></div>`:""}
+        ${rec.stay?`<div><dt>滞在</dt><dd>${esc(rec.stay)}${rec.carNo?"（"+esc(rec.carNo)+"）":""}</dd></div>`:""}
+        ${rec.clinic?`<div><dt>かかりつけ</dt><dd>${esc(rec.clinic.n)}</dd></div>`:""}
+      </dl>
+    </div>
+    <p class="qrnote">ほかの避難所へ移るときに見せると、聞き直しが減ります。<br>
+      <b>スマートフォンでこの画面を撮ってもらう</b>のがいちばん確実です。プリンタがあれば印刷もできます。<br>
+      どちらもできないときは、上の内容を紙に書き写してお渡しください。</p>
+    <div class="qract no-print"><button class="btn" onclick="window.print()">印刷する</button></div>
+  </div>`;
+}
+
+/* ============ search-for-person ============ */
+let NOTICES = [];
+
+S.p1 = ()=>({
+  no:"さがす / 01", q:"どなたをさがしていますか",
+  hint:"掲示に出す内容です。見た人が気づける手がかりを、分かる範囲で入れてください。",
+  body:`<div class="fields">
+    <div class="row">
+      <div class="f"><label for="ksei">姓${REQ}</label><input type="text" id="ksei" data-bind="seekSei" value="${esc(rec.seekSei)}" placeholder="山田"></div>
+      <div class="f"><label for="kmei">名${REQ}</label><input type="text" id="kmei" data-bind="seekMei" value="${esc(rec.seekMei)}" placeholder="花子"></div>
+    </div>
+    <div class="f">
+      <div class="row">
+        <div class="f"><label for="kseik">セイ${ANY}</label><input type="text" id="kseik" data-bind="seekSeiKana" lang="ja" value="${esc(rec.seekSeiKana)}" placeholder="ヤマダ"></div>
+        <div class="f"><label for="kmeik">メイ${ANY}</label><input type="text" id="kmeik" data-bind="seekMeiKana" lang="ja" value="${esc(rec.seekMeiKana)}" placeholder="ハナコ"></div>
+      </div>
+      <span class="note">漢字を変換すると自動で入ります。違うときは直接書き直せます。</span>
+    </div>
+    <div class="f"><label>あなたとの関係${REQ}</label><div class="chips">
+      ${["配偶者","子","親","兄弟姉妹","その他の親族","友人・知人","近所の方"].map(x=>
+        `<button class="chip" data-chip="seekRel" data-val="${x}" aria-pressed="${rec.seekRel===x}">${x}</button>`).join("")}</div></div>
+    <div class="row">
+      <div class="f"><label for="kage">年齢（およそ）${ANY}</label><input type="number" id="kage" data-bind="seekAge" value="${esc(rec.seekAge)}" placeholder="82" inputmode="numeric"></div>
+      <div class="f"><label>性別${ANY}</label><div class="chips">
+        ${["男","女","その他"].map(x=>`<button class="chip" data-chip="seekSex" data-val="${x}" aria-pressed="${rec.seekSex===x}">${x}</button>`).join("")}</div></div>
+    </div>
+    <div class="f"><label for="kfeat">見た目の特徴${ANY}</label>
+      <input type="text" id="kfeat" data-bind="seekFeature" value="${esc(rec.seekFeature)}" placeholder="白髪 めがね 青いジャンパー 杖">
+      <span class="note">服装・体格・持ち物など。見た人が思い出せる手がかりになります。</span></div>
+    <div class="f"><label for="klast">最後に会った場所と時間${ANY}</label>
+      <input type="text" id="klast" data-bind="seekLast" value="${esc(rec.seekLast)}" placeholder="7月28日夜 自宅（〇〇町）で別れた"></div>
+  </div>`,
+  ok:()=>rec.seekSei.trim() && rec.seekMei.trim() && rec.seekRel,
+  wire:()=>{ autoKana("ksei","kseik","seekSeiKana"); autoKana("kmei","kmeik","seekMeiKana"); }
+});
+
+S.p2 = ()=>({
+  no:"さがす / 02", q:"さがしている方（あなた）の連絡先",
+  hint:"掲示には出しません。見つかったときに、受付からあなたへ連絡するために使います。",
+  body:`<div class="fields">
+    <div class="f"><label>お名前について${REQ}</label>
+      ${optList([
+        {l:"名前を伝えてよい"},
+        {l:"自分の名前は残したくない", s:"受付番号だけで受け付けます。理由は聞きません"}
+      ],"anonPick",false)}
+      <p class="hint info" style="margin-top:12px">ご自身が居場所を知られたくない事情を抱えている場合は、下を選んでください。掲示にはさがす方のお名前だけが出ます。</p></div>
+    ${rec.anonFinder?"":`<div class="row">
+      <div class="f"><label for="fsei">姓${REQ}</label><input type="text" id="fsei" data-bind="finderSei" value="${esc(rec.finderSei)}" placeholder="山田"></div>
+      <div class="f"><label for="fmei">名${REQ}</label><input type="text" id="fmei" data-bind="finderMei" value="${esc(rec.finderMei)}" placeholder="太郎"></div>
+    </div>`}
+    <div class="f"><label for="ftel">電話番号${ANY}</label><input type="tel" id="ftel" data-bind="finderTel" value="${esc(rec.finderTel)}" placeholder="09000000000" inputmode="numeric" maxlength="11">
+      <span class="note">ハイフン（-）は不要です。数字だけ入れてください。</span></div>
+    <div class="f"><label>いま連絡がつきますか${ANY}</label>
+      ${optList([{l:"つながる"},{l:"今はつながらない"},{l:"電話を持っていない"}],"finderReach",false)}</div>
+    <div class="sec"><h2>あなた自身のことをたずねられたら${REQ}</h2>
+      ${optList([
+        {l:"ここにいると伝えてよい"},
+        {l:"伝えないでほしい", s:"どなたにもお伝えしません。理由は聞きません"}
+      ],"disclose",false)}</div>
+    <p class="hint info">この連絡先は掲示にも、他の避難所にも出しません。受付の控えにだけ残ります。</p>
+  </div>`,
+  ok:()=>rec.anonPick && !!rec.disclose && (rec.anonFinder || (rec.finderSei.trim() && rec.finderMei.trim()))
+});
+
+S.p3 = ()=>({
+  no:"さがす / 03", q:"掲示してよい範囲を選んでください",
+  hint:"お名前を出すことになります。読み上げて、必ずご本人に選んでもらってください。",
+  body:`<div class="consent">
+    <p>さがしている方のお名前と特徴を掲示します。範囲を選べます。</p>
+    <div class="f"><label>掲示してよい範囲${REQ}</label>
+    ${optList([
+      {l:"この避難所の掲示だけに出す", s:"ここに来た人だけが見られます"},
+      {l:"ほかの避難所やインターネットでも見られるようにする", s:"広く見つかりやすくなります"},
+      {l:"掲示はせず、受付の控えだけにする", s:"スタッフが見かけたときに気づけるようにします"}
+    ],"publish",false)}</div>
+    <p class="hint info" style="margin-top:16px">さがしている方が、住んでいる場所や居場所を知られたくない事情を抱えていることがあります。<br>
+    そのような心当たりがある場合は、いちばん下を選んでください。あとから範囲を広げることもできます。</p>
+    <p style="font-size:14px;color:var(--ink2);margin-top:14px">受付にいる方とこの掲示は、システムが自動で結びつけることはしません。手がかりが見つかったときは、必ずスタッフがご本人に確かめてからお伝えします。</p>
+    ${rec.publish?signBlock():""}
+  </div>`,
+  ok:()=>!!rec.publish && !!rec.sign,
+  wire: wireSign
+});
+
+S.p4 = ()=>({
+  no:"さがす / 04", q:"受け付けました",
+  hint:"掲示は「さがす」の画面に出ます。心当たりのある方は受付に来るよう案内されます。",
+  body:`<div class="callbox">
+    <div style="font-size:20px;font-weight:700;margin-bottom:8px">受付番号 <span style="font-family:var(--mono)">${slipNo()}</span>番</div>
+    <p style="color:var(--ink2);font-size:15px;margin:0 0 8px">この番号を控えてお渡しください。<br>掲示をやめたいときや、見つかったときは、この番号で受付に伝えてもらいます。</p>
+    <p style="color:var(--ink2);font-size:14px">見つかったという連絡があっても、まずスタッフがご本人に確かめます。すぐに居場所をお伝えすることはありません。</p>
+  </div>
+  ${qrPanel()}`,
+  ok:()=>true, last:true
+});
+
+function publishNotice(no){
+  if(rec.route!=="search") return;
+  NOTICES.push({
+    no, name:[rec.seekSei,rec.seekMei].filter(Boolean).join(" "),
+    kana:[rec.seekSeiKana,rec.seekMeiKana].filter(Boolean).join(" "),
+    age:rec.seekAge, sex:rec.seekSex,
+    feature:rec.seekFeature, last:rec.seekLast, rel:rec.seekRel,
+    scope:rec.publish, at:nowStamp(), status:"open"
+  });
+  renderNotices();
+}
+
+function renderNotices(){
+  const box = document.getElementById("seekList"); if(!box) return;
+  const shown = NOTICES.filter(n=>n.status==="open" && !n.scope.startsWith("掲示はせず"));
+  if(!document.getElementById("modeHome").hidden) renderHome();
+  if(!shown.length){
+    box.innerHTML = `<div class="pnone">いま掲示しているものはありません。</div>`;
+    return;
+  }
+  box.innerHTML = `<div class="seekgrid">${shown.map(n=>`<div class="ncard">
+    <div class="nm">${esc(n.name)}${n.kana?`<span class="kn">${esc(n.kana)}</span>`:""}</div>
+    <div class="meta">${[n.age?n.age+"歳くらい":"", n.sex].filter(Boolean).join("・")||"年齢・性別 不明"}</div>
+    <div class="ft${n.feature?"":" empty"}">${esc(n.feature||"特徴：未記入")}</div>
+    <div class="ls${n.last?"":" empty"}">${n.last?"最後に会ったのは："+esc(n.last):"最後に会った状況：未記入"}</div>
+    <div class="ft2"><span class="scope">${n.scope.startsWith("この避難所")?"この避難所のみ":"広く掲示"}</span>
+      <span class="rno">受付番号 ${esc(n.no)}番</span></div>
+    <div class="act"><button data-found="${esc(n.no)}">見つかった／取り下げる</button></div>
+  </div>`).join("")}</div>`;
+}
+
+/* ============ registry (patrol) ============ */
+let REGISTRY = [];
+let openCard = null;
+const RECHECK_HOURS = 12;
+
+function registerOutside(no){
+  if(rec.route==="search") return;
+  if(rec.stay==="避難所" || !rec.stay) return;
+  const risk = [];
+  if(rec.carState==="エンジンは止めていて、閉め切っている") risk.push("暑さ・寒さ対策なし");
+  if(rec.carState==="エンジンをかけて、エアコンや暖房を使っている") risk.push("排気口の確認が必要");
+  if(rec.care && rec.care!=="無") risk.push(rec.care);
+  if(rec.cond.some(c=>c!=="当てはまらない・わからない")) risk.push("医療サポートあり");
+  REGISTRY.push({
+    no, stay:rec.stay,
+    where: rec.stay==="車中泊"
+      ? (rec.carWhere==="here" ? rec.site+" 駐車場" : (rec.carPlace?rec.carPlace.n:"地図ピンのみ"))
+      : (rec.homeAddr || "住所未記入"),
+    detail: rec.stay==="車中泊"
+      ? [rec.carType, rec.carNo?"ナンバー "+rec.carNo:"", rec.carMark].filter(Boolean).join(" ／ ")
+      : rec.homeMark,
+    risk, visits:[], lastAt: Date.now()
+  });
+  renderPatrol();
+}
+
+function hoursSince(t){ return (Date.now()-t)/3600000; }
+function agoText(t){
+  const h = hoursSince(t);
+  if(h < 1) return Math.max(1,Math.round(h*60)) + "分前";
+  return Math.round(h) + "時間前";
+}
+
+const CHECKS = [
+  {k:"body",  q:"体調", o:["変わりない","前より悪い","すぐ医師につなぐ"]},
+  {k:"heat",  q:"暑さ・寒さ", o:["しのげている","つらい"]},
+  {k:"water", q:"水分", o:["とれている","とれていない"]},
+  {k:"leg",   q:"足のむくみ・痛み", o:["ない","ある"]},
+  {k:"food",  q:"食事", o:["とれている","とれていない"]}
+];
+const DANGER = {body:["前より悪い","すぐ医師につなぐ"], heat:["つらい"], water:["とれていない"], leg:["ある"], food:["とれていない"]};
+let draft = {};
+
+function dangerCount(){ return CHECKS.filter(c=>draft[c.k] && DANGER[c.k].includes(draft[c.k])).length; }
+function dangerNote(){
+  const n = dangerCount();
+  if(!n) return "";
+  return `<p class="hint warn" style="margin-top:14px">気になる項目が ${n} つあります。記録すると、この方を待ちの列の先頭に入れて医師につなぎます。</p>`;
+}
+
+function checkForm(r){
+  return `<div class="pform"><div class="fields">
+    ${CHECKS.map(c=>`<div class="f"><label>${esc(c.q)}</label><div class="chips">
+      ${c.o.map(o=>`<button class="chip" data-ck="${c.k}" data-val="${esc(o)}" aria-pressed="${draft[c.k]===o}">${esc(o)}</button>`).join("")}
+    </div></div>`).join("")}
+    <div class="f"><label>気づいたこと</label>
+      <input type="text" id="pnote" value="${esc(draft.note||"")}" placeholder="窓が開かない／隣の人と一緒にいる など"></div>
+    <div class="f"><label>いまの場所</label>
+      <button class="chip" id="pgps">この場所を取得する（GPS）</button>
+      <span class="note" id="pgpsr">${draft.gps?esc(draft.gps):"車を見つけた場所を記録できます。次に別の人が回るときの手がかりになります。"}</span></div>
+  </div>
+  ${dangerNote()}
+  <div class="act">
+    <button class="go" data-save="${esc(r.no)}">記録する</button>
+    <button data-cancel="1">やめる</button>
+  </div></div>`;
+}
+
+function renderPatrol(){
+  const box = document.getElementById("patList"); if(!box) return;
+  if(!document.getElementById("modeHome").hidden) renderHome();
+  if(!REGISTRY.length){
+    box.innerHTML = `<div class="pnone">まだ登録がありません。<br>受付で「車中泊」「自宅」などを選んだ方がここに並びます。</div>`;
+    return;
+  }
+  const sorted = [...REGISTRY].sort((a,b)=>a.lastAt-b.lastAt);
+  box.innerHTML = sorted.map(r=>{
+    const od = hoursSince(r.lastAt) >= RECHECK_HOURS;
+    const open = openCard===r.no;
+    return `<div class="pcard ${od?"overdue":""}">
+      <div class="hd"><span class="no">${esc(r.no)}番</span>
+        <span class="kind">${esc(r.stay)}</span>
+        <span class="last ${od?"od":""}">最終確認 ${r.visits.length?agoText(r.lastAt):"未実施"}</span></div>
+      <div class="where">${esc(r.where)}${r.detail?`<br><span style="color:var(--ink2);font-size:14px">${esc(r.detail)}</span>`:""}</div>
+      ${r.risk.length?`<div class="risk">${r.risk.map(x=>`<span>${esc(x)}</span>`).join("")}</div>`:""}
+      ${open?checkForm(r):`<div class="act">
+        <button class="go" data-open="${esc(r.no)}">確認を記録する</button>
+        ${r.visits.length?`<button data-log="${esc(r.no)}">これまでの記録</button>`:""}
+      </div>`}
+    </div>`;
+  }).join("");
+}
+
+document.addEventListener("click",(e)=>{
+  const fd = e.target.closest("[data-found]");
+  if(fd){
+    ask("この掲示を取り下げますか？","受付番号での本人確認を済ませてから操作してください。",
+      ()=>{ const n = NOTICES.find(x=>x.no===fd.dataset.found); if(n){ n.status="closed"; renderNotices(); } },
+      "取り下げる","やめる");
+    return;
+  }
+  const op = e.target.closest("[data-open]");
+  if(op){ openCard = op.dataset.open; draft = {}; renderPatrol(); return; }
+  const ca = e.target.closest("[data-cancel]");
+  if(ca){ openCard = null; draft = {}; renderPatrol(); return; }
+  const ck = e.target.closest("[data-ck]");
+  if(ck){ const k = ck.dataset.ck; draft[k] = draft[k]===ck.dataset.val ? "" : ck.dataset.val; renderPatrol(); return; }
+  const lg = e.target.closest("[data-log]");
+  if(lg){
+    const r = REGISTRY.find(x=>x.no===lg.dataset.log);
+    notify(`${r.no}番 のこれまでの記録`,
+      r.visits.map(v=>`${v.at}\n`+CHECKS.map(c=>`${c.q}：${v[c.k]||"—"}`).join(" ／ ")+(v.note?`\nメモ：${v.note}`:"")).join("\n\n"));
+    return;
+  }
+  const sv = e.target.closest("[data-save]");
+  if(sv){
+    const r = REGISTRY.find(x=>x.no===sv.dataset.save);
+    const note = document.getElementById("pnote");
+    r.visits.push({...draft, note:note?note.value:"", at:nowStamp(), by:rec.writer||"担当未設定"});
+    r.lastAt = Date.now();
+    const danger = dangerCount();
+    openCard = null; draft = {};
+    if(danger){
+      QUEUE.push({no:r.no, route:"medical", urgent:true, status:"waiting", at:nowStamp()});
+      sortQueue(); renderBoard();
+      notify(`${r.no}番 の方を待ちの列の先頭に入れました`, "医師につなぐ準備をしてください。");
+    }
+    renderPatrol(); return;
+  }
+  if(e.target.id==="pgps"){
+    const out = document.getElementById("pgpsr");
+    if(!navigator.geolocation){ out.textContent = "この端末では位置を取得できません。目印を書き足してください。"; return; }
+    out.textContent = "取得中…";
+    navigator.geolocation.getCurrentPosition(
+      pp=>{ draft.gps = `${pp.coords.latitude.toFixed(5)}, ${pp.coords.longitude.toFixed(5)}`; out.textContent = draft.gps; },
+      ()=>{ out.textContent = "位置を取得できませんでした。目印を書き足してください。"; },
+      {enableHighAccuracy:true, timeout:8000}
+    );
+  }
+});
+
+/* ============ 通話できるようになったことの通知 ============ */
+function startQueuedCall(no){
+  const cur = no ? QUEUE.find(x=>x.no===no && x.status==="now") : current();
+  if(!cur){ notify("いま呼んでいる方はいません"); return; }
+  const r = RECORDS.find(x=>x.no===cur.no);
+  if(!r){ notify("受付の記録が見つかりません","この端末で受け付けた方ではないようです。"); return; }
+  const free = DOCTORS.filter(x=>x.w==="待機中");
+  if(!free.length){ notify("いま対応できる医師がいません","少し待ってからもう一度お試しください。"); return; }
+  startCall(ctxFromRecord(r, free[0]));
+}
+
+function syncHdr(){
+  const h = document.getElementById("topStack")?.offsetHeight || 50;
+  document.documentElement.style.setProperty("--hdr", h + "px");
+}
+window.addEventListener("resize", syncHdr);
+
+function updateAlert(){
+  const bar = document.getElementById("alertBar"); if(!bar) return;
+  const mode = document.getElementById("modeHome").hidden ? "" : "home";
+  const onBoard = !document.getElementById("modeBoard").hidden;
+  const onVideo = !document.getElementById("modeVideo").hidden;
+  const nows = currentAll();
+  if(!cfgReady() || !nows.length || onBoard || onVideo || roleIs("display")){ bar.hidden = true; syncHdr(); return; }
+
+  const cur = nows[0];
+  const r = RECORDS.find(x=>x.no===cur.no);
+  const free = DOCTORS.filter(x=>x.w==="待機中");
+  const name = r ? r.name : "";
+  const more = nows.length>1 ? `ほか${nows.length-1}人` : "";
+  bar.hidden = false;
+  const go = document.getElementById("alertGo");
+  const ready = free.length && r;
+  if(roleIs("consult")){
+    // 診察端末：通話を始める側
+    bar.className = ready ? "" : "wait";
+    go.textContent = "通話をはじめる";
+    document.getElementById("alertText").textContent = ready
+      ? `${cur.no}番 ${name}さん・通話をはじめられます${more?`（${more}お待ち）`:""}`
+      : `${cur.no}番 ${name}さんを呼び出し中${more?`（${more}）`:""}・医師の空きを待っています`;
+  } else if(roleIs("patrol")){
+    bar.className = "wait";
+    go.textContent = "";
+    document.getElementById("alertText").textContent =
+      `${cur.no}番 ${name}さん${more?`ほか${nows.length-1}人`:""}を呼び出し中です（受付でご案内しています）`;
+  } else {
+    // 受付端末：本人を案内する側
+    bar.className = ready ? "call" : "wait";
+    go.textContent = "この端末で通話する";
+    document.getElementById("alertText").textContent = ready
+      ? `${cur.no}番 ${name}さんを診察の席へご案内ください${more?`（${more}お待ち）`:""}`
+      : `${cur.no}番 ${name}さんを呼び出し中${more?`（${more}）`:""}・医師の空きを待っています`;
+  }
+  syncHdr();
+}
+
+/* ============ mode switch ============ */
+const MODE_LABEL = {home:"受付票", intake:"受付", board:"待ち状況", seek:"さがす", patrol:"巡回", call:"呼び出し", rx:"お薬", rec:"受付の記録", net:"全体の状況", video:"オンライン診療", help:"使い方", config:"設定"};
+
+function setMode(m){
+  document.getElementById("modeHome").hidden   = m!=="home";
+  document.getElementById("modeIntake").hidden = m!=="intake";
+  document.getElementById("modeBoard").hidden  = m!=="board";
+  document.getElementById("modeVideo").hidden  = m!=="video";
+  document.getElementById("modeNet").hidden    = m!=="net";
+  document.getElementById("modeRec").hidden    = m!=="rec";
+  document.getElementById("modeRx").hidden     = m!=="rx";
+  document.getElementById("modeCall").hidden   = m!=="call";
+  document.getElementById("modeConfig").hidden = m!=="config";
+  document.getElementById("modeHelp").hidden   = m!=="help";
+  document.getElementById("modeSeek").hidden   = m!=="seek";
+  document.getElementById("modePatrol").hidden = m!=="patrol";
+  document.getElementById("navBar").style.display = m==="intake" ? "" : "none";
+  document.querySelector(".prog").style.display = m==="intake" ? "" : "none";
+  document.getElementById("btnHome").hidden = m==="home";
+  document.getElementById("btnReset").hidden = m!=="intake";
+  if(cfgReady()){
+    document.getElementById("siteName").textContent = CONFIG.site + "／" + CONFIG.writer;
+    const tn = document.getElementById("termName");
+    tn.hidden = false;
+    tn.textContent = `${ROLES[CONFIG.role].icon} ${ROLES[CONFIG.role].label}`
+      + (roleIs("reception") ? `　${CONFIG.termIndex}／${CONFIG.termCount}台目・次は${NEXT_NO}番` : "");
+  }
+  document.getElementById("brandLbl").textContent = MODE_LABEL[m] || "受付票";
+  if(m==="home") renderHome();
+  if(m==="board") renderBoard();
+  if(m==="video") renderVideo(); else stopCallTimer();
+  updateAlert();
+  if(m==="net") renderNet();
+  if(m==="rec"){ recOpen=null; recDaysOpen=false; renderRecords(); }
+  if(m==="rx") renderRx();
+  if(m==="call") renderCall();
+  if(m==="config") renderConfig();
+  if(m==="help"){ const h=document.getElementById("helpQr"); if(!h.innerHTML) h.innerHTML = QR.svg("https://example.invalid/hinan-help", 190); }
+  if(m==="seek") renderNotices();
+  if(m==="patrol") renderPatrol();
+  window.scrollTo({top:0});
+}
+
+let homeTab = "staff";
+function setHomeTab(t){
+  homeTab = t;
+  document.querySelectorAll(".htab").forEach(b=> b.setAttribute("aria-selected", String(b.dataset.htab===t)));
+  document.getElementById("hGuest").hidden = t!=="guest";
+  document.getElementById("hStaff").hidden = t!=="staff";
+  const lead = document.querySelector(".hlead");
+  if(lead) lead.textContent = "使うものを選んでください";
+}
+
+function renderHome(){
+  const w = waiting().length;
+  document.getElementById("hBoard").textContent = w ? `${w}人待ち` : "待ちなし";
+  const nn = NOTICES.filter(n=>n.status==="open" && !n.scope.startsWith("掲示はせず")).length;
+  document.getElementById("hSeek").textContent = nn ? `${nn}件` : "掲示なし";
+  const pending = RXLIST.filter(r=>r.status==="pending").length;
+  const arrived = RXLIST.filter(r=>r.status==="arrived").length;
+  const hr = document.getElementById("hRx");
+  if(hr){
+    const t=[]; if(pending) t.push(`${pending}件 未送信`); if(arrived) t.push(`${arrived}件 未お渡し`);
+    hr.textContent = t.join(" ／ ") || "残りなし";
+    hr.className = t.length ? "bd warn" : "bd";
+  }
+  const hn = document.getElementById("hNet");
+  if(hn){ const t=netTotals(); hn.textContent = `全体 ${t.total}人待ち ／ 医師 ${t.d.available}人`; }
+  const hrec = document.getElementById("hRec");
+  if(hrec) hrec.textContent = `${RECORDS.length}件`;
+  const cf = document.getElementById("hCfg");
+  if(cf){ cf.textContent = cfgReady() ? CONFIG.site : "未設定"; cf.className = cfgReady() ? "bd" : "bd warn"; }
+  const pd = REGISTRY.filter(r=>hoursSince(r.lastAt)>=RECHECK_HOURS).length;
+  const el = document.getElementById("hPat");
+  el.textContent = pd ? `${pd}人 要確認` : `登録 ${REGISTRY.length}人`;
+  el.className = pd ? "bd warn" : "bd";
+}
+
+document.querySelectorAll(".htab").forEach(b=> b.onclick = ()=> setHomeTab(b.dataset.htab));
+document.querySelectorAll("[data-go]").forEach(b=> b.onclick = ()=>{
+  if(b.dataset.go==="intake"){
+    if(!cfgReady()){
+      notify("先に設定が必要です","この端末を置く避難所と、聞き取りをする人の名前を設定してください。");
+      setMode("config"); return;
+    }
+    rec.site = CONFIG.site; rec.writer = CONFIG.writer;
+  }
+  setMode(b.dataset.go);
+});
+document.getElementById("alertGo").onclick = ()=>{
+  const inIntake = !document.getElementById("modeIntake").hidden;
+  if(inIntake && rec.route && idx>0){
+    ask("受付の途中です","入力した内容は消えます。通話にうつりますか？",
+      ()=>{ rec = blank(); rec.site=CONFIG.site; rec.writer=CONFIG.writer; SLIP_NO=null; idx=0; paint(); startQueuedCall(); },
+      "通話にうつる","受付を続ける");
+    return;
+  }
+  startQueuedCall();
+};
+
+document.getElementById("btnHome").onclick = ()=>{
+  if(!document.getElementById("modeIntake").hidden && rec.route && idx>0){
+    ask("受付をやめてホームへもどりますか？","いま入力した内容は消えます。",
+        ()=>{ rec = blank(); rec.site=CONFIG.site; rec.writer=CONFIG.writer; SLIP_NO = null; idx = 0; paint(); setMode("home"); },
+        "もどる","受付を続ける");
+    return;
+  }
+  setMode("home");
+};
+function renderCall(){
+  const box = document.getElementById("callBody"); if(!box) return;
+  const nows = currentAll(), w = waiting(), miss = QUEUE.filter(q=>q.status==="miss");
+  const hc = document.getElementById("hCall");
+  if(hc) hc.textContent = nows.length ? `${nows.length}人を対応中` : (w.length ? `${w.length}人お待ち` : "待ちなし");
+
+  box.innerHTML = `
+  <div class="csec ${nows.length?"nowsec":""}">
+    <h2>いま対応中（${nows.length}／${CONFIG.booths}席）</h2>
+    ${nows.length ? nows.map(q=>{
+      const r = RECORDS.find(x=>x.no===q.no);
+      return `<div class="nowcard">
+        <div class="nowhd"><span class="num">${esc(q.no)}番</span>
+          <span class="nm">${esc(r?r.name:"（この端末に記録なし）")}</span>
+          ${urgentReason(q.no).map(x=>`<span class="uflag">${esc(x)}</span>`).join("")}</div>
+        <div class="act">
+          <button class="btn go" data-video="${esc(q.no)}">${roleIs("consult")?"通話をはじめる":"この端末で通話する"}</button>
+          <button class="btn" data-done="${esc(q.no)}">診察を終える</button>
+          <button class="btn" data-miss="${esc(q.no)}">来られなかった</button>
+        </div>
+      </div>`;
+    }).join("") : `<p class="note">いま対応中の方はいません。</p>`}
+  </div>
+
+  <div class="csec">
+    <h2>全体の中でのこの避難所</h2>
+    <div class="netgrid">
+      <div><span class="k">全体の待ち</span><b>${netTotals().total}</b><span class="u">人</span></div>
+      <div><span class="k">対応できる医師</span><b>${netTotals().d.available}</b><span class="u">人</span></div>
+      <div><span class="k">全体での順番</span><b>${netTotals().rank}</b><span class="u">番目</span></div>
+      <div><span class="k">つながる目安</span><b>${netTotals().myEta ?? "—"}</b><span class="u">分後</span></div>
+    </div>
+    <p class="note" style="margin-top:10px">医師が空いたら、全体の順番にしたがってお呼びします。<b>いまは仮の値です。</b></p>
+  </div>
+
+  <div class="csec">
+    <h2>次にお呼びする方</h2>
+    ${w.length?`<div class="cnext">
+      <span class="num">${esc(w[0].no)}番</span>
+      <span class="why">${urgentReason(w[0].no).map(x=>`<span class="uflag">${esc(x)}</span>`).join("")}</span>
+      <button class="btn go" data-call="next" ${boothsFree()?"":"disabled"}>この方を呼ぶ</button>
+    </div>
+    ${boothsFree()?`<p class="note">あと ${boothsFree()} 人お呼びできます。</p>`
+      :`<p class="note">${CONFIG.booths}席すべて対応中です。どなたかの診察が終わってからお呼びください。</p>`}`
+    :`<p class="note">お待ちの方はいません。</p>`}
+  </div>
+
+  <div class="csec">
+    <h2>お待ちの方（${w.length}人）</h2>
+    ${w.length?`<ol class="clist">${w.map((q,i)=>`<li>
+      <span class="ord">${i+1}</span><span class="num">${esc(q.no)}番</span>
+      <span class="wname">${esc((RECORDS.find(x=>x.no===q.no)||{}).name||"")}</span>
+      <span class="tflag">端末${(+q.no)%CONFIG.termCount===CONFIG.termIndex%CONFIG.termCount?CONFIG.termIndex:((+q.no-1)%CONFIG.termCount)+1}</span>
+      <span class="tm">${esc(q.at.slice(11))}受付</span>
+      ${urgentReason(q.no).length?`<span class="why">${urgentReason(q.no).map(x=>`<span class="uflag">${esc(x)}</span>`).join("")}</span>`:""}
+      ${i>0?`<button class="mini" data-up="${esc(q.no)}">先に呼ぶ</button>`:""}
+    </li>`).join("")}</ol>`:`<p class="note">なし</p>`}
+  </div>
+
+  <div class="csec ${miss.length?"warnsec":""}">
+    <h2>お越しにならなかった方（${miss.length}人）</h2>
+    ${miss.length?`<ol class="clist">${miss.map(q=>`<li>
+      <span class="num">${esc(q.no)}番</span>
+      <button class="mini" data-back="${esc(q.no)}">列に戻す</button>
+    </li>`).join("")}</ol>`:`<p class="note">なし</p>`}
+  </div>
+
+  <div class="csec"><button class="btn" id="bSeed" style="width:100%">動作確認用：待ちを1人増やす</button></div>`;
+
+  box.querySelectorAll("[data-call='next']").forEach(b=> b.onclick = ()=>{
+    if(!boothsFree()){ notify("診察の席がふさがっています",`${CONFIG.booths}席すべて対応中です。設定で席数を増やすこともできます。`); return; }
+    const ww=waiting(); if(!ww.length){ notify("お待ちの方はいません"); return; }
+    ww[0].status="now";
+    renderBoard(); renderCall(); updateAlert();
+  });
+  box.querySelectorAll("[data-done]").forEach(b=> b.onclick = ()=>{
+    const q=QUEUE.find(x=>x.no===b.dataset.done && x.status==="now"); if(q) q.status="done";
+    renderBoard(); renderCall(); updateAlert();
+  });
+  box.querySelectorAll("[data-miss]").forEach(b=> b.onclick = ()=>{
+    const q=QUEUE.find(x=>x.no===b.dataset.miss && x.status==="now"); if(q) q.status="miss";
+    renderBoard(); renderCall(); updateAlert();
+  });
+  box.querySelectorAll("[data-video]").forEach(b=> b.onclick = ()=> startQueuedCall(b.dataset.video));
+  box.querySelectorAll("[data-up]").forEach(b=> b.onclick = ()=>{
+    const q=QUEUE.find(x=>x.no===b.dataset.up && x.status==="waiting");
+    ask(`${q.no}番 の方を先にお呼びしますか？`,"お急ぎの方として、待ちの列の先頭に移します。",
+      ()=>{ q.urgent=true; sortQueue(); renderBoard(); renderCall(); }, "先に呼ぶ","やめる");
+  });
+  box.querySelectorAll("[data-back]").forEach(b=> b.onclick = ()=>{
+    const q=QUEUE.find(x=>x.no===b.dataset.back && x.status==="miss");
+    ask(`${q.no}番 の方が来られました`,"お待ちの列に戻しますか？",
+      ()=>{ q.status="waiting"; q.at=nowStamp(); sortQueue(); renderBoard(); renderCall(); updateAlert(); }, "列に戻す","やめる");
+  });
+  const sd=document.getElementById("bSeed");
+  if(sd) sd.onclick = ()=>{
+    QUEUE.push({no:String(NEXT_NO), route:"medical", urgent:Math.random()<0.3, status:"waiting", at:nowStamp()});
+    NEXT_NO += CONFIG.termCount;
+    sortQueue(); renderBoard(); renderCall();
+  };
+}
+
+
+/* ============ paint & events ============ */
+function paint(){
+  flow = buildFlow();
+  if(idx >= flow.length) idx = flow.length-1;
+  const def = S[flow[idx]]();
+  document.body.dataset.route = rec.route;
+  const hp = HELP[flow[idx]];
+  document.getElementById("screen").innerHTML =
+    `<div class="stepno">${esc(def.no)}</div><h1 class="q">${esc(def.q)}${def.req?REQ:""}</h1>
+     <p class="hint">${esc(def.hint)}</p>
+     ${hp?`<details class="help"><summary>この画面の使い方</summary><p>${esc(hp)}</p></details>`:""}
+     ${def.body}${def.footer||""}`;
+  if(flow[idx]==="m4x"){
+    const bc = document.getElementById("emContinue");
+    if(bc) bc.onclick = ()=>{
+      rec.redirectAck = true;
+      goTo(idx);
+    };
+  }
+  document.getElementById("progBar").style.width = ((idx)/(Math.max(flow.length-1,1))*100)+"%";
+  document.getElementById("btnBack").disabled = idx===0;
+  const nx = document.getElementById("btnNext");
+  nx.disabled = !def.ok();
+  nx.textContent = def.last ? "受付を終える" : (idx===flow.length-1?"完了":"次へ");
+  if(def.wire) def.wire();
+  renderSlip();
+}
+
+document.addEventListener("click",(e)=>{
+  const opt = e.target.closest(".opt");
+  if(opt){
+    const k = opt.dataset.key, v = opt.dataset.val, multi = opt.dataset.multi==="1";
+    if(k==="pick1"){
+      rec.route = v.includes("さがして") ? "search"
+                : (v.includes("物資")||v==="その他") ? "admin" : "medical";
+      rec.branch = v.includes("気持ち") ? "mind" : (rec.route==="medical" ? "body" : "");
+      rec.pick1 = v;
+    } else if(k==="carWhereLabel"){
+      rec.carWhere = v==="この避難所の駐車場" ? "here":"other";
+      rec.carWhereLabel = v;
+    } else if(k==="anonPick"){
+      rec.anonPick = rec.anonPick===v ? "" : v;
+      rec.anonFinder = rec.anonPick==="自分の名前は残したくない";
+      if(rec.anonFinder){ rec.finderSei=""; rec.finderMei=""; }
+    } else if(k==="consentPick"){
+      rec.consentPick = v; rec.consent = v==="同意する";
+      if(!rec.consent){ rec.sign=""; rec.consentAt=""; }
+    } else if(multi){
+      const ex = EXCLUSIVE[k];
+      if(ex && v===ex){
+        rec[k] = rec[k].includes(ex) ? [] : [ex];
+      } else {
+        const i = rec[k].indexOf(v);
+        i<0 ? rec[k].push(v) : rec[k].splice(i,1);
+        if(ex) rec[k] = rec[k].filter(x=>x!==ex);
+      }
+    } else { rec[k] = rec[k]===v ? "" : v; }
+    paint(); return;
+  }
+  const chip = e.target.closest(".chip");
+  if(chip){
+    const k = chip.dataset.chip, v = chip.dataset.val;
+    if(k==="clinicUnknown"){ rec.clinic = rec.clinic&&rec.clinic.n==="わからない" ? null : {n:"わからない",a:"",verified:false}; }
+    else if(k==="copyAddr"){ rec.homeAddr = rec.addr; }
+    else rec[k] = rec[k]===v ? "" : v;
+    paint(); return;
+  }
+  const pick = e.target.closest("[data-pick]");
+  if(pick){ rec[pick.dataset.key] = JSON.parse(pick.dataset.pick); paint(); return; }
+  const undo = e.target.closest("[data-undo]");
+  if(undo){ rec[undo.dataset.undo] = null; paint(); return; }
+});
+
+document.addEventListener("input",(e)=>{
+  const b = e.target.dataset.bind;
+  if(!b) return;
+  if(b==="tel" || b==="carNo"){
+    const cleaned = e.target.value.replace(/[^0-9]/g,"");
+    if(cleaned !== e.target.value){
+      const at = e.target.selectionStart;
+      e.target.value = cleaned;
+      try{ e.target.setSelectionRange(at-1, at-1); }catch(_){}
+    }
+  }
+  rec[b] = e.target.value;
+  document.getElementById("btnNext").disabled = !S[flow[idx]]().ok();
+  renderSlip();
+});
+
+function goTo(next){
+  idx = next;
+  closeSlip();
+  window.scrollTo({top:0, behavior:"smooth"});
+  paint();
+}
+
+document.getElementById("btnNext").onclick = ()=>{
+  const def = S[flow[idx]]();
+  if(def.last){
+    const no = enqueue();
+    registerOutside(no);
+    publishNotice(no);
+    if(rec.route==="medical" && (rec.medOn || rec.callResult==="お薬が処方された")) addRx();
+    snapshotRecord(no);
+    const outside = rec.stay!=="避難所";
+    notify(`${no}番 で受け付けました`,
+      `番号を紙に書いてお渡しし、掲示の「待ち状況」で番号を探すよう案内してください。`
+      + (outside ? `\n\n避難所の外にお住まいのため、「巡回」の一覧にも追加しました。` : ""));
+    reset(); setMode("home"); return;
+  }
+  if(idx < flow.length-1) goTo(idx+1);
+};
+document.getElementById("btnBack").onclick = ()=>{ if(idx>0) goTo(idx-1); };
+function reset(){ rec=blank(); rec.site=CONFIG.site; rec.writer=CONFIG.writer; SLIP_NO=null; closeSlip(); window.scrollTo({top:0,behavior:"smooth"}); idx=0; paint(); }
+document.getElementById("btnReset").onclick = ()=> ask(
+  "最初からやり直しますか？",
+  "いま入力している受付の内容が消えます。避難所と担当者の設定はそのまま残ります。",
+  ()=>{ rec=blank(); rec.site=CONFIG.site; rec.writer=CONFIG.writer; SLIP_NO=null; closeSlip(); window.scrollTo({top:0,behavior:"smooth"}); idx=0; paint(); },
+  "やり直す","やめる");
+
+const st = document.getElementById("slipToggle"), sl = document.getElementById("slip");
+const isNarrow = ()=>window.matchMedia("(max-width:900px)").matches;
+function setSlip(open){
+  if(!isNarrow()) return;
+  sl.hidden = !open;
+  st.setAttribute("aria-expanded", String(open));
+  st.textContent = open ? "記入内容をとじる ▴" : "記入内容を見る ▾";
+}
+function closeSlip(){ setSlip(false); }
+if(isNarrow()) closeSlip();
+st.onclick = ()=> setSlip(sl.hidden);
+window.addEventListener("resize", ()=>{ if(!isNarrow()) sl.hidden = false; else if(st.getAttribute("aria-expanded")!=="true") sl.hidden = true; });
+
+
+/* ============ モック用の初期データ ============ */
+function seedDemo(){
+  const H = h => Date.now() - h*3600000;
+  const T = h => { const d=new Date(H(h)), p=n=>String(n).padStart(2,"0");
+    return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`; };
+
+  CONFIG.pref = "東京都";
+  CONFIG.site = "小石川公民館";
+  CONFIG.writer = "上林";
+  CONFIG.prefs = ["東京都","埼玉県","千葉県","神奈川県","山梨県"];
+  CONFIG.termCount = 2; CONFIG.termIndex = 1;   // 偶数番号は2台目の受付ぶん
+  NEXT_NO = 17;
+  RX_ETA = "15:00";
+  SERVER.lastSync = T(0.1);
+  rec.site = CONFIG.site; rec.writer = CONFIG.writer;
+
+  // 受付順に 1〜16番。番号が小さいほど古い受付になる
+  const R = (no,h,route,branch,name,kana,age,extra) => Object.assign({
+    no:String(no), at:T(h), route, branch, name, kana, age,
+    disclose:"ここにいると伝えてよい", writer:"上林", proxy:"", stay:"避難所", carNo:"",
+    cond:[], medOn:"", medKind:[], medOther:"", techo:"", clinic:"", clinicVerified:false,
+    allergy:"", care:"", urgency:"", doctor:"", redirect:"", needs:[], damage:"", seek:""
+  }, extra||{});
+
+  RECORDS = [
+    R(16,0.4,"medical","body","清水 昌代","シミズ マサヨ","71",{
+      disclose:"伝えないでほしい", proxy:"子／清水 亮", stay:"自宅",
+      cond:["毎日飲んでいる薬がある"], medOn:"続けて飲めている", medKind:["血圧の薬"],
+      techo:"持っている", clinic:"中央病院", clinicVerified:true, allergy:"無", care:"要支援2",
+      urgency:"予約でよい"}),
+    R(15,1.2,"medical","body","高橋 令子","タカハシ レイコ","84",{
+      stay:"車中泊", carNo:"4417", cond:["毎日飲んでいる薬がある"], medOn:"切れている・足りない",
+      medKind:["血圧の薬"], medOther:"胃薬（名前は不明）", techo:"持っている",
+      allergy:"無", care:"要介護2", urgency:"予約でよい"}),
+    R(14,1.8,"admin","","村田 隆","ムラタ タカシ","58",{
+      needs:["水・食料・トイレ・入浴などの生活物資","電気・水道・ガスなどライフラインの相談"],
+      damage:"修繕が必要な程度の被害があった"}),
+    R(13,2.0,"medical","mind","新井 ミツ","アライ ミツ","66",{
+      disclose:"伝えないでほしい",
+      cond:["眠れない日が続いている","毎日飲んでいる薬がある"], medOn:"切れている・足りない",
+      medKind:["気持ちを落ち着ける薬・眠る薬"], techo:"持っていない",
+      clinic:"本郷ファミリークリニック", clinicVerified:true, care:"無",
+      urgency:"今すぐ医師につなぐ", doctor:"大西 由紀"}),
+    R(12,2.6,"medical","body","大槻 進","オオツキ ススム","79",{
+      stay:"車中泊", carNo:"8802",
+      cond:["インスリン注射をしている","毎日飲んでいる薬がある"], medOn:"切れている・足りない",
+      medKind:["血圧の薬","糖尿病の薬"], techo:"持っている",
+      clinic:"なかむら内科・糖尿病クリニック", clinicVerified:true, allergy:"有：そば", care:"無",
+      urgency:"今すぐ医師につなぐ"}),
+    R(11,3.0,"search","","","","",{seek:"佐藤 健"}),
+    R(10,3.1,"medical","body","岡村 実","オカムラ ミノル","70",{
+      cond:["歯や口の急な痛みがある"], allergy:"無", care:"無", urgency:"予約でよい"}),
+    R(9,4.4,"medical","body","渡辺 千代","ワタナベ チヨ","88",{
+      cond:["毎日飲んでいる薬がある"], medOn:"切れている・足りない", medKind:["血圧の薬"],
+      techo:"持っている", clinic:"きたの整形外科", clinicVerified:true, allergy:"無", care:"要介護1",
+      urgency:"予約でよい", doctor:"川原 誠"}),
+    R(8,5.2,"medical","body","森下 昭三","モリシタ ショウゾウ","76",{
+      stay:"車中泊", carNo:"3021", cond:["毎日飲んでいる薬がある"], medOn:"切れている・足りない",
+      medKind:["糖尿病の薬"], techo:"持っていない", clinic:"みなみ内科クリニック", clinicVerified:true,
+      allergy:"無", care:"無", urgency:"予約でよい", doctor:"佐藤 健一"}),
+    R(7,6.0,"medical","body","井上 光子","イノウエ ミツコ","83",{
+      cond:["毎日飲んでいる薬がある"], medOn:"切れている・足りない", medKind:["血圧の薬"],
+      techo:"持っている", clinic:"中央病院", clinicVerified:true, allergy:"無", care:"要支援1",
+      urgency:"予約でよい", doctor:"佐藤 健一"}),
+    R(6,8.0,"search","","","","",{seek:"山田 ハナ"}),
+    R(5,26.0,"medical","body","藤井 正一","フジイ ショウイチ","75",{
+      cond:["在宅酸素を使っている"], medOn:"続けて飲めている", techo:"持っている",
+      clinic:"中央病院", clinicVerified:true, allergy:"無", care:"要介護3",
+      urgency:"予約でよい", doctor:"佐藤 健一"}),
+    R(4,50.0,"medical","body","松岡 徹","マツオカ トオル","63",{
+      cond:["毎日飲んでいる薬がある"], medOn:"続けて飲めている", medKind:["血圧の薬"],
+      techo:"持っている", clinic:"中央病院", clinicVerified:true, allergy:"無", care:"無",
+      urgency:"予約でよい", doctor:"川原 誠"}),
+    R(3,74.0,"admin","","石田 和子","イシダ カズコ","69",{
+      needs:["水・食料・トイレ・入浴などの生活物資"], damage:"被害があった"}),
+    R(2,98.0,"admin","","野口 大輔","ノグチ ダイスケ","41",{
+      needs:["情報が届いていない・知りたいことがある"], damage:"被害はなかった"}),
+    R(1,146.0,"medical","body","小林 芳江","コバヤシ ヨシエ","81",{
+      cond:["毎日飲んでいる薬がある"], medOn:"切れている・足りない", medKind:["血圧の薬"],
+      techo:"持っていない", clinic:"中央病院", clinicVerified:true, allergy:"無", care:"要支援1",
+      urgency:"今すぐ医師につなぐ", doctor:"佐藤 健一"})
+  ];
+
+  QUEUE = [
+    {no:"7",  route:"medical", urgent:false, status:"done",    at:T(6.0)},
+    {no:"8",  route:"medical", urgent:false, status:"done",    at:T(5.2)},
+    {no:"9",  route:"medical", urgent:false, status:"now",     at:T(4.4)},
+    {no:"10", route:"medical", urgent:false, status:"miss",    at:T(3.1)},
+    {no:"12", route:"medical", urgent:true,  cutoff:1, status:"waiting", at:T(2.6)},
+    {no:"13", route:"medical", urgent:false, status:"waiting", at:T(2.0)},
+    {no:"15", route:"medical", urgent:false, status:"waiting", at:T(1.2)},
+    {no:"16", route:"medical", urgent:false, status:"waiting", at:T(0.4)}
+  ];
+  sortQueue();
+
+  REGISTRY = [
+    {no:"15", stay:"車中泊", where:"小石川公民館 駐車場",
+     detail:"白 軽自動車 ／ ナンバー 4417 ／ 入口すぐ、赤い車の隣",
+     risk:["排気口の確認が必要","要介護2"],
+     visits:[{body:"変わりない",heat:"しのげている",water:"とれている",leg:"ない",food:"とれている",
+              note:"日中は公民館の中で過ごしているとのこと",at:T(14),by:"上林"}],
+     lastAt:H(14)},
+    {no:"16", stay:"自宅", where:"文京区小石川3丁目", detail:"青い屋根、門の前に自転車",
+     risk:["医療サポートあり"], visits:[], lastAt:H(20)},
+    {no:"8", stay:"車中泊", where:"小石川公民館 駐車場",
+     detail:"紺 ミニバン ／ ナンバー 3021 ／ 体育館側の角",
+     risk:["医療サポートあり"], visits:[], lastAt:H(30)},
+    {no:"12", stay:"車中泊", where:"道の駅 あぐりぱーく",
+     detail:"シルバー ワゴン ／ ナンバー 8802 ／ 建物の裏手",
+     risk:["暑さ・寒さ対策なし"],
+     visits:[{body:"前より悪い",heat:"つらい",water:"とれていない",leg:"ない",food:"とれている",
+              note:"エアコンが使えず、日中は車を離れている",at:T(5),by:"上林"}],
+     lastAt:H(5)}
+  ];
+
+  RXLIST = [
+    {no:"7", name:"井上 光子", kinds:["血圧の薬"], other:"", techo:"持っている",
+     clinic:"中央病院", doctor:"佐藤 健一", status:"handed", at:T(6), sentAt:T(5.5), handedAt:T(2),
+     pickup:"本人が取りに来る", eta:"09:00"},
+    {no:"8", name:"森下 昭三", kinds:["糖尿病の薬"], other:"", techo:"持っていない",
+     clinic:"みなみ内科クリニック", doctor:"佐藤 健一", status:"arrived", at:T(5.2), sentAt:T(5),
+     away:"車中泊（小石川公民館 駐車場）— 巡回で届けてください", pickup:"巡回で届ける", eta:"09:00"},
+    {no:"9", name:"渡辺 千代", kinds:["血圧の薬"], other:"", techo:"持っている",
+     clinic:"きたの整形外科", doctor:"川原 誠", status:"sent", at:T(4.4), sentAt:T(4),
+     pickup:"本人が取りに来る", eta:"09:00"},
+    {no:"12", name:"大槻 進", kinds:["血圧の薬","糖尿病の薬"], other:"", techo:"持っている",
+     clinic:"なかむら内科・糖尿病クリニック", doctor:"", status:"pending", at:T(2.6), sentAt:"",
+     pickup:"巡回で届ける", eta:""},
+    {no:"13", name:"新井 ミツ", kinds:["気持ちを落ち着ける薬・眠る薬"], other:"", techo:"持っていない",
+     clinic:"本郷ファミリークリニック", doctor:"大西 由紀", status:"pending", at:T(2.0), sentAt:"",
+     pickup:"本人が取りに来る", eta:""},
+    {no:"15", name:"高橋 令子", kinds:["血圧の薬"], other:"胃薬（名前は不明）", techo:"持っている",
+     clinic:"", doctor:"", status:"pending", at:T(1.2), sentAt:"",
+     pickup:"巡回で届ける", eta:""}
+  ];
+
+  NOTICES = [
+    {no:"6", name:"山田 ハナ", kana:"ヤマダ ハナ", age:"82", sex:"女",
+     feature:"白髪 めがね 花柄の上着 杖をついている", last:"7月28日の夜、自宅（小石川4丁目）で別れた",
+     rel:"親", scope:"この避難所の掲示だけに出す", at:T(8), status:"open"},
+    {no:"11", name:"佐藤 健", kana:"サトウ ケン", age:"45", sex:"男",
+     feature:"紺の作業着 黒いリュック 眼鏡なし", last:"7月28日の朝、勤務先（水道橋）へ出たきり",
+     rel:"配偶者", scope:"ほかの避難所やインターネットでも見られるようにする", at:T(3), status:"open"}
+  ];
+}
+
+seedDemo();
+paint();
+applyRole();
+setMode(roleIs("display") ? "board" : "home");
+updateAlert();
+setInterval(updateAlert, 5000);   // TODO: 実装ではサーバーからの通知で更新する
+</script>
+</body>
+</html>
